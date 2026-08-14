@@ -377,7 +377,7 @@
             if (window.isFetchingData) return;
             window.isFetchingData = true;
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'GET', redirect: 'follow' });
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?_=${Date.now()}`, { method: 'GET', redirect: 'follow', cache: 'no-store' });
                 const data = await response.json();
                 if (data.repere) allRecords = data.repere;
                 if (data.comenzi_lansate) allProiecte = data.comenzi_lansate;
