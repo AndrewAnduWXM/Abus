@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PROductie Mobil - Operator</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#005b9f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ABUS PROducție">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        abus: { blue: '#005b9f', dark: '#004375', orange: '#f39200', darkorange: '#d17e00' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], logo: ['Arial', 'Helvetica', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { background-color: #f1f5f9; overscroll-behavior-y: contain; }
+        ::-webkit-scrollbar { display: none; }
+        .toast-message {
+            position: fixed; bottom: 20px; left: 16px; right: 16px; padding: 16px 20px;
+            border-radius: 14px; color: white; font-weight: 700; font-size: 15px;
+            z-index: 1000; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25);
+            display: none; transition: all 0.3s ease; transform: translateY(120%); opacity: 0;
+            text-align: center;
+        }
+        .toast-show { transform: translateY(0); opacity: 1; display: flex !important; align-items: center; justify-content: center; gap: 8px; }
+        .toast-error { background-color: #ef4444; }
+        .toast-success { background-color: #10b981; }
+        .toast-warning { background-color: #f59e0b; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .tap-scale { transition: transform 0.1s ease; }
+        .tap-scale:active { transform: scale(0.96); }
+        .pulse-dot { animation: pulseDot 1.4s infinite; }
+        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+        .piece-card.role-done { opacity: 0.55; }
+    </style>
+</head>
+<body class="font-sans text-slate-800 min-h-screen flex flex-col">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="fixed inset-0 z-[500] bg-abus-dark flex flex-col items-center justify-center px-6 transition-opacity duration-300">
+        <div class="flex items-end mb-2">
+            <span class="text-abus-orange font-black text-5xl tracking-tight font-logo">ABUS</span>
+        </div>
+        <p class="text-white/70 text-sm font-bold mb-10 tracking-wide">PROducție · Mobil Operator</p>
+
+        <form id="loginForm" class="w-full max-w-sm flex flex-col gap-4">
+            <input type="text" id="loginUser" autocomplete="username" placeholder="Utilizator" required
+                class="w-full px-5 py-4 rounded-2xl border-2 border-transparent bg-white/95 text-lg font-bold outline-none focus:border-abus-orange transition-all shadow-lg">
+            <input type="password" id="loginPass" autocomplete="current-password" placeholder="Parolă" required
+                class="w-full px-5 py-4 rounded-2xl border-2 border-transparent bg-white/95 text-lg font-bold outline-none focus:border-abus-orange transition-all shadow-lg">
+            <button type="submit" id="btnLoginBtn"
+                class="w-full py-4 rounded-2xl bg-abus-orange hover:bg-abus-darkorange text-white text-lg font-black shadow-lg tap-scale transition-colors mt-2">
+                Autentificare
+            </button>
+        </form>
+    </div>
+
+    <div id="toast" class="toast-message"><span id="toastText"></span></div>
+
+    <!-- CONFIRM MODAL -->
+    <div id="confirmModal" class="fixed inset-0 z-[900] flex items-end justify-center bg-slate-900/60 opacity-0 pointer-events-none transition-all duration-300">
+        <div id="confirmModalContent" class="bg-white p-6 rounded-t-3xl shadow-xl w-full max-w-md transform translate-y-full transition-transform duration-300">
+            <div class="w-10 h-1.5 bg-slate-200 rounded-full mx-auto mb-5"></div>
+            <h3 id="confirmModalTitle" class="text-xl font-black text-slate-800 mb-2">Confirmare</h3>
+            <p id="confirmModalText" class="text-sm text-slate-500 font-semibold mb-6 leading-relaxed"></p>
+            <div class="flex flex-col gap-3">
+                <button id="btnConfirmYes" class="w-full py-4 rounded-2xl text-base font-black bg-abus-blue hover:bg-abus-dark text-white tap-scale transition-colors shadow-sm">Da, continuă</button>
+                <button id="btnConfirmNo" class="w-full py-4 rounded-2xl text-base font-black bg-slate-100 text-slate-600 tap-scale transition-colors">Anulează</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOCATION MODAL -->
+    <div id="locationModal" class="fixed inset-0 z-[900] flex flex-col bg-white opacity-0 pointer-events-none transition-all duration-300">
+        <div class="flex-shrink-0 px-5 pt-6 pb-4 border-b border-slate-200 bg-white">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-black text-slate-800">Alege locația</h3>
+                <button id="btnLocationCancel" class="text-slate-400 font-bold text-sm px-3 py-1.5">Anulează</button>
+            </div>
+            <p id="locationModalOpName" class="text-xs font-bold text-abus-blue mb-3"></p>
+            <input type="text" id="locationModalSearch" placeholder="Caută locație / prescurtare..."
+                class="w-full px-4 py-3.5 bg-slate-50 rounded-xl border border-slate-300 outline-none text-base font-semibold focus:border-abus-blue">
+        </div>
+        <div id="locationModalList" class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
+    </div>
+
+    <!-- ADD EXTRA OP MODAL -->
+    <div id="extraOpModal" class="fixed inset-0 z-[900] flex flex-col bg-white opacity-0 pointer-events-none transition-all duration-300">
+        <div class="flex-shrink-0 px-5 pt-6 pb-4 border-b border-slate-200 bg-white">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-black text-slate-800">Operație suplimentară</h3>
+                <button id="btnExtraOpCancel" class="text-slate-400 font-bold text-sm px-3 py-1.5">Anulează</button>
+            </div>
+            <input type="text" id="extraOpInput" placeholder="Caută sau scrie o denumire nouă..."
+                class="w-full px-4 py-3.5 bg-slate-50 rounded-xl border border-slate-300 outline-none text-base font-semibold focus:border-abus-blue">
+        </div>
+        <div id="extraOpList" class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
+        <div class="flex-shrink-0 p-4 border-t border-slate-200 bg-white">
+            <button id="btnExtraOpSave" class="w-full py-4 rounded-2xl text-base font-black bg-slate-800 hover:bg-slate-700 text-white tap-scale transition-colors">Adaugă „<span id="btnExtraOpSaveLabel"></span>"</button>
+        </div>
+    </div>
+
+    <!-- PIECE DETAIL FULLSCREEN OVERLAY -->
+    <div id="pieceDetailOverlay" class="fixed inset-0 z-[800] bg-slate-50 opacity-0 pointer-events-none transition-opacity duration-200 flex flex-col">
+        <div class="flex-shrink-0 bg-abus-dark text-white px-4 py-4 flex items-center justify-between gap-3 shadow-md">
+            <div id="pieceDetailHeaderInfo" class="min-w-0"></div>
+            <button onclick="closePieceDetail()" class="flex-shrink-0 bg-white/10 hover:bg-white/20 rounded-full p-2.5 tap-scale">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div id="pieceDetailBody" class="flex-1 overflow-y-auto p-3 space-y-2.5 pb-8"></div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="bg-abus-dark text-white shadow-md flex-shrink-0 sticky top-0 z-40">
+        <div class="px-4 py-3 flex items-center justify-between gap-2">
+            <div class="flex items-end">
+                <span class="text-abus-orange font-black text-2xl tracking-tight font-logo">ABUS</span>
+                <span class="text-white/40 text-[9px] font-bold ml-1.5 mb-0.5">v13</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="text-right leading-tight">
+                    <div id="currentUserLabel" class="text-xs font-black">-</div>
+                    <div id="currentRoleLabel" class="text-[10px] font-bold text-abus-orange uppercase tracking-wider">-</div>
+                </div>
+                <button id="notifBtn" onclick="requestNotifPermission(true)" class="hidden bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-white/70">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                </button>
+                <button id="manualSyncBtn" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors">
+                    <svg id="syncIcon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </button>
+                <button id="btnLogout" class="bg-white/10 hover:bg-red-500 p-2.5 rounded-xl transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MY POSITION BANNER -->
+    <div id="myPositionBanner" class="px-4 py-3 bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-400 text-center">
+        Se verifică activitatea ta curentă...
+    </div>
+
+    <!-- SEARCH -->
+    <div class="px-4 py-3 bg-white border-b border-slate-200 sticky top-[60px] z-30">
+        <input type="text" id="searchProiecte" placeholder="🔍 Caută AN, Proiect..."
+            class="w-full px-4 py-3.5 bg-slate-50 rounded-xl border border-slate-300 outline-none text-base font-semibold focus:border-abus-blue">
+    </div>
+
+    <!-- MAIN LIST -->
+    <main id="lista_proiecte_container" class="flex-1 px-3 py-4 space-y-4 pb-10">
+        <div class="text-center py-16 text-slate-400 font-bold">Se încarcă...</div>
+    </main>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBXpByF5aDH7niTUjzTXkftRJNMtlR1sVbBJxavXEnWoFwMAXHOYSNp6N9pJ4LIS0t/exec';
+
+        const operatiuniNume = [
+            'Debitare suplimentară', 'Gaurire', 'Sablare', 'Strunjire', 'Frezare',
+            'Tobare', 'Presare', 'Curatare', 'Indoire', 'Sudura',
+            'Vopsire', 'Pansonare'
+        ];
+
+        const LOCATII_OPERATII = [
+            { nume: "Abkant Baykal", cod: "ABK" }, { nume: "Abkant manual", cod: "APC" },
+            { nume: "Debitare OXI", cod: "MDO" }, { nume: "Ferastrau MEBA", cod: "MDF" },
+            { nume: "Ghilotina mica", cod: "GH1" }, { nume: "Ghilotina mare", cod: "GH2" },
+            { nume: "Foarfeca manuala", cod: "FM" }, { nume: "Masina debitat circulara", cod: "MDC" },
+            { nume: "Laser EAGLE", cod: "LEAG" }, { nume: "Plasma mica", cod: "PLSm" },
+            { nume: "Plasma mare", cod: "PLSM" }, { nume: "Polizor cu banda", cod: "PLZ" },
+            { nume: "Polizor", cod: "PLZ1" }, { nume: "Polizare ajustare flex", cod: "PLZ2" },
+            { nume: "Sablare noua", cod: "S" }, { nume: "Tobare1", cod: "T1" },
+            { nume: "Masina sud rotund", cod: "MSR" }, { nume: "MIG", cod: "MIG" },
+            { nume: "Banc sudura/curatare", cod: "BCAS" }, { nume: "Freza Bridgeport", cod: "FB" },
+            { nume: "Freza Wabeco", cod: "F1" }, { nume: "Freza FU36", cod: "F3" },
+            { nume: "Freza FU32", cod: "F4" }, { nume: "Strung Condor", cod: "S1" },
+            { nume: "Strung SN400", cod: "S2" }, { nume: "Strung CNC Leadwell", cod: "SCNC" },
+            { nume: "Masina gaurit monofazat", cod: "G1" }, { nume: "Masina gaurit si filetat", cod: "G2" },
+            { nume: "Masina gaurit si filetat", cod: "G3" }, { nume: "Centru AKIRA", cod: "AKR" },
+            { nume: "Presa mica M1", cod: "PR1" }, { nume: "Presa mijl. M2", cod: "PR2" },
+            { nume: "Presa mare M", cod: "PR3" }, { nume: "Banc montaj", cod: "BCM" },
+            { nume: "Banc ajustare (at presaj)", cod: "BCAP" }, { nume: "Ambalare/depozitare", cod: "BDP" },
+            { nume: "Spalare - Vopsire", cod: "SPV" }, { nume: "TRANSPORT uzinal", cod: "TRAN" }
+        ];
+
+        let currentUser = null, currentRole = null;
+        let allRecords = [], allProiecte = [];
+        let isUpdating = false;
+        window.isFetchingData = false;
+        window.expandedProjects = new Set();
+        window.showAllProiecte = false;
+        window.pendingLocationCallback = null;
+        window.pendingConfirmAction = null;
+        window.pendingExtraOpTarget = null;
+
+        function normalizeStr(s) {
+            return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+        function userCanDoOperation(opName) {
+            if (currentRole === 'Admin') return true;
+            if (!currentRole) return false;
+            const roluri = String(currentRole).split(',').map(r => normalizeStr(r)).filter(Boolean);
+            if (roluri.includes('operator')) return true;
+            const normOp = normalizeStr(opName);
+            if (!normOp) return false;
+            return roluri.some(r => normOp === r || normOp.includes(r) || r.includes(normOp));
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.className = `toast-message toast-${type} toast-show`;
+            document.getElementById('toastText').textContent = msg;
+            clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => { t.className = 'toast-message'; }, 3200);
+        }
+
+        // ---------- LOGIN ----------
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const btn = document.getElementById('btnLoginBtn');
+            btn.disabled = true; btn.textContent = 'Se verifică...';
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    redirect: 'follow', body: JSON.stringify({ action: 'login', user, pass })
+                });
+                const res = await response.json();
+                if (res.status === 'succes') {
+                    localStorage.setItem('abus_user_mobil', res.user);
+                    localStorage.setItem('abus_role_mobil', res.rol);
+                    initApp(res.user, res.rol);
+                } else { showToast(res.mesaj, 'error'); }
+            } catch (err) { showToast('Eroare de conectare', 'error'); }
+            finally { btn.disabled = false; btn.textContent = 'Autentificare'; }
+        });
+
+        // ---------- NOTIFICĂRI ----------
+        window.knownAvailableOpKeys = null; // null = nu am făcut încă prima verificare (nu notificăm la pornire)
+
+        function requestNotifPermission(fromUserClick) {
+            if (!('Notification' in window)) return;
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(() => updateNotifBtnState());
+            } else if (fromUserClick && Notification.permission === 'denied') {
+                showToast('Notificările sunt blocate din setările browserului pentru acest site.', 'warning');
+            }
+        }
+
+        function updateNotifBtnState() {
+            const btn = document.getElementById('notifBtn');
+            if (!btn) return;
+            if (!('Notification' in window)) { btn.classList.add('hidden'); return; }
+            btn.classList.remove('hidden');
+            if (Notification.permission === 'granted') {
+                btn.classList.add('text-emerald-400');
+                btn.title = 'Notificări active';
+            } else {
+                btn.classList.remove('text-emerald-400');
+                btn.title = 'Activează notificările';
+            }
+        }
+
+        function computeAvailableOpKeysForRole() {
+            const keys = new Map(); // key -> {label, cod_an, projNume}
+            if (currentRole === 'Admin') return keys; // Adminul nu are un "rol" de notificat
+            allProiecte.forEach(proj => {
+                (proj.piese || []).forEach((p, idx) => {
+                    (p.ops || []).forEach((op, oIdx) => {
+                        if (op.required === false) return;
+                        const opName = operatiuniNume[oIdx];
+                        if (!userCanDoOperation(opName)) return;
+                        const status = op.timerData ? op.timerData.status : 'idle';
+                        if (status !== 'idle') return; // deja pornită/pauzată/finalizată - nu e "nouă"
+                        const blocker = findLowerUnfinishedOp(p, op);
+                        if (blocker) return;
+                        keys.set(`${proj.id}|${idx}|b${oIdx}`, { label: opName, cod_an: p.cod_an, projNume: proj.nume });
+                    });
+                    (p.extraOps || []).forEach((eo, eIdx) => {
+                        if (!userCanDoOperation(eo.text)) return;
+                        const status = eo.timerData ? eo.timerData.status : 'idle';
+                        if (status !== 'idle') return;
+                        const blocker = findLowerUnfinishedOp(p, eo);
+                        if (blocker) return;
+                        keys.set(`${proj.id}|${idx}|e${eIdx}`, { label: eo.text, cod_an: p.cod_an, projNume: proj.nume });
+                    });
+                });
+            });
+            return keys;
+        }
+
+        function checkForNewWorkNotifications() {
+            const currentKeys = computeAvailableOpKeysForRole();
+            if (window.knownAvailableOpKeys === null) {
+                window.knownAvailableOpKeys = currentKeys;
+                return; // prima verificare - doar înregistrăm starea, nu notificăm retroactiv
+            }
+            const newItems = [];
+            currentKeys.forEach((info, key) => {
+                if (!window.knownAvailableOpKeys.has(key)) newItems.push(info);
+            });
+            window.knownAvailableOpKeys = currentKeys;
+            if (newItems.length === 0) return;
+
+            const first = newItems[0];
+            const bodyText = newItems.length === 1
+                ? `${first.label} pe ${first.cod_an} (${first.projNume})`
+                : `${first.label} pe ${first.cod_an} și încă ${newItems.length - 1} operații noi`;
+
+            showToast(`🔔 Operație nouă disponibilă: ${bodyText}`, 'success');
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                try {
+                    new Notification('Ai de lucru — ABUS PROducție', { body: bodyText, tag: 'abus-work-available' });
+                } catch (e) {}
+            }
+        }
+
+        function initApp(user, role) {
+            currentUser = user; currentRole = role;
+            document.getElementById('currentUserLabel').textContent = user;
+            document.getElementById('currentRoleLabel').textContent = role;
+            const loginScreen = document.getElementById('loginScreen');
+            loginScreen.style.opacity = '0';
+            setTimeout(() => { loginScreen.style.display = 'none'; }, 300);
+            requestNotifPermission(false);
+            updateNotifBtnState();
+            loadData(true);
+        }
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            localStorage.removeItem('abus_user_mobil'); localStorage.removeItem('abus_role_mobil');
+            window.location.reload();
+        });
+
+        window.onload = () => {
+            const u = localStorage.getItem('abus_user_mobil'), r = localStorage.getItem('abus_role_mobil');
+            if (u && r) initApp(u, r);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
+        };
+
+        // ---------- DATA LOADING ----------
+        async function loadData(forceRender) {
+            if (window.isFetchingData) return;
+            window.isFetchingData = true;
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'GET', redirect: 'follow' });
+                const data = await response.json();
+                if (data.repere) allRecords = data.repere;
+                if (data.comenzi_lansate) allProiecte = data.comenzi_lansate;
+            } catch (error) { console.error('Eroare încărcare date:', error); }
+            finally {
+                window.isFetchingData = false;
+                renderAll();
+                checkForNewWorkNotifications();
+            }
+        }
+
+        document.getElementById('manualSyncBtn').addEventListener('click', async () => {
+            const icon = document.getElementById('syncIcon'); icon.classList.add('spin');
+            await loadData(true);
+            setTimeout(() => icon.classList.remove('spin'), 800);
+        });
+
+        setInterval(() => { if (currentUser && !isUpdating && !window.isFetchingData) loadData(); }, 20000);
+        document.getElementById('searchProiecte').addEventListener('input', () => renderAll());
+
+        function renderAll() {
+            renderMyPositionBanner();
+            renderProiecteList();
+            if (window.openPdOd) renderPieceDetail();
+        }
+
+        // ---------- MY POSITION BANNER ----------
+        function findMyActiveOperation() {
+            if (!currentUser) return null;
+            for (const proj of allProiecte) {
+                if (!proj.piese) continue;
+                for (let idx = 0; idx < proj.piese.length; idx++) {
+                    const p = proj.piese[idx];
+                    if (p.ops) {
+                        for (let oIdx = 0; oIdx < p.ops.length; oIdx++) {
+                            const op = p.ops[oIdx];
+                            if (op && op.timerData && op.timerData.status === 'running' && op.timerData.user === currentUser) {
+                                const label = (op.timerData.opNumber ? `OP${op.timerData.opNumber} · ` : '') + operatiuniNume[oIdx];
+                                return { proj, piesa: p, originalIndex: idx, label, timerData: op.timerData };
+                            }
+                        }
+                    }
+                    if (p.extraOps) {
+                        for (const eo of p.extraOps) {
+                            if (eo && eo.timerData && eo.timerData.status === 'running' && eo.timerData.user === currentUser) {
+                                const label = (eo.timerData.opNumber ? `OP${eo.timerData.opNumber} · ` : '') + eo.text;
+                                return { proj, piesa: p, originalIndex: idx, label, timerData: eo.timerData };
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function renderMyPositionBanner() {
+            const el = document.getElementById('myPositionBanner');
+            const found = findMyActiveOperation();
+            if (!found) {
+                el.className = 'px-4 py-3 bg-slate-100 border-b border-slate-200 text-sm font-bold text-slate-400 text-center';
+                el.innerHTML = 'Nu ai niciun cronometru pornit acum.';
+                return;
+            }
+            const locLine = (found.timerData && (found.timerData.locatie || found.timerData.locatieNume))
+                ? `<div class="text-sm font-bold text-blue-500 truncate mt-0.5">📍 ${found.timerData.locatieNume || ''}${found.timerData.locatie ? ` (${found.timerData.locatie})` : ''}</div>`
+                : '';
+            el.className = 'px-4 py-3 bg-blue-50 border-b border-blue-200';
+            el.innerHTML = `
+                <button onclick="goToMyPosition('${found.proj.id}', ${found.originalIndex})" class="w-full flex items-center justify-between gap-2 tap-scale">
+                    <div class="text-left min-w-0">
+                        <div class="flex items-center gap-1.5 text-blue-600 text-xs font-black uppercase tracking-wide mb-0.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 pulse-dot"></span> Ești aici
+                        </div>
+                        <div class="text-base font-black text-blue-900 truncate">${found.proj.nume || '-'}</div>
+                        <div class="text-sm font-bold text-blue-700 truncate">${found.piesa.cod_an} · ${found.label}</div>
+                        ${locLine}
+                    </div>
+                    <svg class="w-6 h-6 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            `;
+        }
+
+        window.goToMyPosition = function(projId, originalIndex) {
+            window.openPieceDetail(projId, originalIndex);
+        };
+
+        // ---------- ROLE FILTER + PROJECT LIST ----------
+        function renderProiecteList() {
+            const container = document.getElementById('lista_proiecte_container');
+            const searchTerm = String(document.getElementById('searchProiecte').value || '').toLowerCase().trim();
+
+            let filtered = allProiecte;
+            if (searchTerm) {
+                filtered = filtered.filter(proj => {
+                    const matchNume = String(proj.nume || '').toLowerCase().includes(searchTerm);
+                    const matchPiese = proj.piese && proj.piese.some(p => String(p.cod_an || '').toLowerCase().includes(searchTerm));
+                    return matchNume || matchPiese;
+                });
+            }
+
+            if (currentRole !== 'Admin') {
+                filtered = filtered.filter(proj => {
+                    if (!proj.piese) return false;
+                    return proj.piese.some(p => {
+                        const hasBase = (p.ops || []).some((op, idx) => op.required !== false && userCanDoOperation(operatiuniNume[idx]) && (!op.timerData || op.timerData.status !== 'finished'));
+                        const hasExtra = (p.extraOps || []).some(eo => userCanDoOperation(eo.text) && (!eo.timerData || eo.timerData.status !== 'finished'));
+                        return hasBase || hasExtra;
+                    });
+                });
+            }
+
+            filtered.forEach(proj => {
+                let total = 0, done = 0;
+                (proj.piese || []).forEach(p => (p.ops || []).forEach(o => { if (o.required !== false) { total++; if (o.timerData && o.timerData.status === 'finished') done++; } }));
+                proj._isCompleted = total > 0 && done === total;
+                proj._progress = total === 0 ? 0 : Math.round((done / total) * 100);
+            });
+            filtered.sort((a, b) => {
+                if (a._isCompleted !== b._isCompleted) return a._isCompleted ? 1 : -1;
+                return new Date(b.data) - new Date(a.data);
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 font-bold">${searchTerm ? 'Niciun rezultat.' : 'Nimic de lucru momentan.'}</div>`;
+                return;
+            }
+
+            const LIMITA = 5;
+            const toShow = window.showAllProiecte ? filtered : filtered.slice(0, LIMITA);
+
+            container.innerHTML = toShow.map(proj => renderProjectCard(proj)).join('') + (filtered.length > LIMITA ? (
+                window.showAllProiecte
+                    ? `<button onclick="toggleShowAll()" class="w-full py-3 text-xs font-black text-abus-blue underline">Arată doar ultimele ${LIMITA}</button>`
+                    : `<button onclick="toggleShowAll()" class="w-full py-3.5 rounded-2xl bg-slate-100 text-slate-700 text-sm font-black tap-scale">Mai multe (${filtered.length - LIMITA}) →</button>`
+            ) : '');
+        }
+
+        window.toggleShowAll = function() { window.showAllProiecte = !window.showAllProiecte; renderProiecteList(); };
+
+        window.openPdOd = null; // { projectId, originalIndex } - currently open piece detail
+
+        window.openPieceDetail = function(projectId, originalIndex) {
+            window.openPdOd = { projectId, originalIndex };
+            renderPieceDetail();
+            const overlay = document.getElementById('pieceDetailOverlay');
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+        };
+
+        window.closePieceDetail = function() {
+            window.openPdOd = null;
+            const overlay = document.getElementById('pieceDetailOverlay');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+        };
+
+        function renderPieceDetail() {
+            if (!window.openPdOd) return;
+            const { projectId, originalIndex } = window.openPdOd;
+            const proj = allProiecte.find(pr => pr.id === projectId);
+            if (!proj) { closePieceDetail(); return; }
+            const rawP = proj.piese[originalIndex];
+            if (!rawP) { closePieceDetail(); return; }
+            const p = { ...rawP, originalIndex };
+
+            const lgLabel = getLgLabel(p.material);
+            document.getElementById('pieceDetailHeaderInfo').innerHTML = `
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <span class="font-black text-2xl tracking-wide">${p.cod_an}</span>
+                    <span class="bg-white/15 text-white/70 border border-white/20 text-xs font-black px-1.5 py-0.5 rounded-md">OP10 ✓</span>
+                </div>
+                <div class="text-sm font-bold text-white/70 truncate mb-1.5">${proj.nume} · ${p.material} · ${p.necesar} buc</div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-sm font-black bg-white/15 px-2 py-1 rounded-md">L: ${p.dimensiune}</span>
+                    <span class="text-sm font-black bg-white/15 px-2 py-1 rounded-md">${lgLabel}: ${p.latura_taiere}mm</span>
+                </div>
+            `;
+
+            const opsHtml = (p.ops || []).map((op, idx) => renderOpRow(proj, p, op, idx)).filter(Boolean).join('');
+            const extraHtml = (p.extraOps || []).map((eo, idx) => renderExtraOpRow(proj, p, eo, idx)).join('');
+
+            document.getElementById('pieceDetailBody').innerHTML = `
+                <button onclick="cautaSiDeschidePDF('${p.cod_an}')" class="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 font-black text-base tap-scale mb-1">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Vezi desenul (PDF)
+                </button>
+                ${opsHtml}
+                ${extraHtml}
+                <button onclick="openAddExtraOp('${proj.id}', '${p.cod_an}', '${p.material}', '${p.dimensiune}', ${p.originalIndex})" class="w-full py-3.5 rounded-xl border-2 border-dashed border-slate-300 text-slate-500 text-sm font-black tap-scale mt-1">+ Operație suplimentară</button>
+            `;
+        }
+
+        window.cautaSiDeschidePDF = async function(codAnRaw) {
+            const codAN = String(codAnRaw || '').split('.')[0].trim();
+            if (!codAN) return;
+            try {
+                showToast(`Se caută desenul ${codAN}.pdf...`);
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    redirect: 'follow', body: JSON.stringify({ action: 'cautaPDF', an: codAN })
+                });
+                const res = await response.json();
+                if (res.status === 'succes' && res.url) {
+                    window.open(res.url, '_blank');
+                } else {
+                    showToast(res.mesaj || `Desenul ${codAN}.pdf nu a fost găsit.`, 'error');
+                }
+            } catch (err) {
+                showToast('Eroare la căutarea desenului!', 'error');
+            }
+        };
+
+        window.toggleProject = function(projId) {
+            if (window.expandedProjects.has(projId)) window.expandedProjects.delete(projId);
+            else window.expandedProjects.add(projId);
+            renderProiecteList();
+        };
+
+        function renderProjectCard(proj) {
+            const isOpen = window.expandedProjects.has(proj.id);
+            const totalPiese = (proj.piese || []).length;
+            const mainANs = [...new Set((proj.piese || []).map(p => String(p.cod_an).split('.')[0].toUpperCase()))].join(', ');
+
+            const piecesHtml = isOpen ? (proj.piese || []).map((p, idx) => renderPieceCard(proj, { ...p, originalIndex: idx })).join('') : '';
+
+            return `
+                <div id="proj-${proj.id}" class="bg-white rounded-2xl shadow-sm border ${proj._isCompleted ? 'border-emerald-200' : 'border-slate-200'} overflow-hidden">
+                    <button onclick="toggleProject('${proj.id}')" class="w-full text-left p-4 flex items-center justify-between gap-3 tap-scale">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-lg text-slate-800 truncate">${proj.nume || '-'}</span>
+                                ${proj._isCompleted ? '<span class="bg-emerald-100 text-emerald-700 text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0">FINALIZAT</span>' : ''}
+                            </div>
+                            <div class="text-sm font-bold text-slate-500 mt-1 truncate">Piese: ${totalPiese} · AN: ${mainANs}</div>
+                            <div class="w-full h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                                <div class="h-full ${proj._progress === 100 ? 'bg-emerald-500' : 'bg-abus-blue'} rounded-full" style="width:${proj._progress}%"></div>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 text-slate-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                    ${isOpen ? `<div class="border-t border-slate-100 bg-slate-50/60 p-2.5 space-y-2.5">${piecesHtml}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function getLgLabel(material) {
+            const m = String(material || '').toLowerCase();
+            if (m.includes('teav') || m.includes('țeav')) return 'Latură';
+            if (m.includes('tabl') || m.includes('tăbl')) return 'Grosime';
+            return 'Latură/Gros.';
+        }
+
+        function renderPieceCard(proj, p) {
+            let rolTotal = 0, rolDone = 0;
+            (p.ops || []).forEach((op, idx) => { if (op.required !== false && userCanDoOperation(operatiuniNume[idx])) { rolTotal++; if (op.timerData && op.timerData.status === 'finished') rolDone++; } });
+            (p.extraOps || []).forEach(eo => { if (userCanDoOperation(eo.text)) { rolTotal++; if (eo.timerData && eo.timerData.status === 'finished') rolDone++; } });
+            const rolBadge = rolTotal === 0 ? '' : (rolDone === rolTotal
+                ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black px-2 py-1 rounded-lg flex-shrink-0">✓ Terminat</span>`
+                : `<span class="bg-orange-50 text-abus-orange border border-orange-200 text-xs font-black px-2 py-1 rounded-lg flex-shrink-0">De lucru ${rolDone}/${rolTotal}</span>`);
+            const lgLabel = getLgLabel(p.material);
+
+            return `
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-stretch">
+                    <button onclick="openPieceDetail('${proj.id}', ${p.originalIndex})" class="flex-1 text-left p-4 tap-scale min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span class="font-black text-2xl text-slate-800 tracking-wide">${p.cod_an}</span>
+                            <span class="bg-slate-100 text-slate-500 border border-slate-200 text-xs font-black px-1.5 py-0.5 rounded-md flex-shrink-0">OP10 ✓</span>
+                        </div>
+                        <div class="text-base font-bold text-slate-600 truncate">${p.material} · ${p.necesar} buc</div>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <span class="text-sm font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">L: ${p.dimensiune}</span>
+                            <span class="text-sm font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">${lgLabel}: ${p.latura_taiere}mm</span>
+                        </div>
+                        <div class="mt-2">${rolBadge}</div>
+                    </button>
+                    <button onclick="event.stopPropagation(); cautaSiDeschidePDF('${p.cod_an}')" class="flex-shrink-0 w-16 flex flex-col items-center justify-center gap-1 bg-slate-50 border-l border-slate-200 text-slate-500 tap-scale">
+                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="text-[11px] font-black">Desen</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderOpRow(proj, p, op, idx) {
+            if (op.required === false) return '';
+            const opName = operatiuniNume[idx];
+            const canOperate = userCanDoOperation(opName);
+            const status = op.timerData ? op.timerData.status : 'idle';
+            const blocker = (status === 'running' || status === 'finished') ? null : findLowerUnfinishedOp(p, op);
+            return renderOpControl(proj.id, p.cod_an, p.material, p.dimensiune, p.originalIndex, idx + 1, false, op.timerData, opName, canOperate, blocker);
+        }
+
+        function renderExtraOpRow(proj, p, eo, idx) {
+            const canOperate = userCanDoOperation(eo.text);
+            const status = eo.timerData ? eo.timerData.status : 'idle';
+            const blocker = (status === 'running' || status === 'finished') ? null : findLowerUnfinishedOp(p, eo);
+            return renderOpControl(proj.id, p.cod_an, p.material, p.dimensiune, p.originalIndex, idx, true, eo.timerData, eo.text, canOperate, blocker);
+        }
+
+        function renderOpControl(projectId, cod_an, material, dimensiune, originalIndex, opIndex, isExtra, timerData, opLabel, canOperate, seqBlocker) {
+            const tData = timerData || { status: 'idle' };
+            const status = tData.status;
+            const isOwner = !tData.user || tData.user === currentUser || currentRole === 'Admin';
+            const lockedByOther = canOperate && (status === 'running' || status === 'paused') && !isOwner;
+            const blockedBySequence = canOperate && !lockedByOther && seqBlocker && status !== 'running' && status !== 'finished';
+            const viewOnly = !canOperate || lockedByOther || blockedBySequence;
+            const opNumPrefix = tData.opNumber ? `OP${tData.opNumber} · ` : '';
+            const locHtml = (tData.locatie || tData.locatieNume) ? `<div class="text-sm font-bold text-abus-blue mt-1">📍 ${tData.locatieNume || ''}${tData.locatie ? ` (${tData.locatie})` : ''}</div>` : '';
+
+            let rightHtml = '';
+            if (viewOnly) {
+                let label = 'Neînceput', color = 'text-slate-400', dot = 'bg-slate-300';
+                if (status === 'finished') { label = 'Finalizat'; color = 'text-emerald-600'; dot = 'bg-emerald-500'; }
+                else if (status === 'running') { label = lockedByOther ? `În lucru (${tData.user})` : 'În lucru'; color = 'text-blue-600'; dot = 'bg-blue-500'; }
+                else if (status === 'paused') { label = 'Pauzat'; color = 'text-amber-600'; dot = 'bg-amber-500'; }
+                else if (blockedBySequence) { label = `Așteaptă OP${seqBlocker.num}`; color = 'text-slate-400'; dot = 'bg-slate-300'; }
+                rightHtml = `<div class="flex items-center gap-1.5 ${color} text-sm font-black"><span class="w-2.5 h-2.5 rounded-full ${dot}"></span>${label}<svg class="w-4 h-4 ml-0.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>`;
+            } else if (status === 'finished') {
+                rightHtml = `<div class="flex items-center gap-1.5 text-emerald-600 text-sm font-black"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>Finalizat</div>`;
+            } else if (status === 'running') {
+                rightHtml = `
+                    <div class="flex items-center gap-2">
+                        <button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'stop',${isExtra})" class="px-4 py-3 rounded-lg bg-amber-100 text-amber-700 font-black text-sm tap-scale">Pauză</button>
+                        <button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'finish',${isExtra})" class="px-4 py-3 rounded-lg bg-emerald-500 text-white font-black text-sm tap-scale">Finalizare</button>
+                    </div>
+                `;
+            } else {
+                rightHtml = `
+                    <div class="flex items-center gap-2">
+                        <button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'start',${isExtra},'${String(opLabel).replace(/'/g, "\\'")}')" class="px-5 py-3 rounded-lg bg-abus-blue text-white font-black text-sm tap-scale">${status === 'paused' ? 'Continuă' : 'Start'}</button>
+                        ${status === 'paused' ? `<button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'finish',${isExtra})" class="px-4 py-3 rounded-lg bg-emerald-500 text-white font-black text-sm tap-scale">Finalizare</button>` : ''}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="flex items-center justify-between gap-2 p-3.5 rounded-xl border ${status === 'running' ? 'border-blue-300 bg-blue-50/50' : 'border-slate-200 bg-white'} ${viewOnly ? 'opacity-70' : ''}">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-base font-black text-slate-800 truncate">${opNumPrefix}${opLabel}</div>
+                        ${locHtml}
+                    </div>
+                    ${rightHtml}
+                </div>
+            `;
+        }
+
+        // ---------- HELPERS FOR STATE ----------
+        function getTargetOp(projectId, originalIndex, opIndex, isExtra) {
+            const proiect = allProiecte.find(p => p.id === projectId);
+            if (!proiect) return null;
+            const piesa = proiect.piese[originalIndex];
+            if (!piesa) return null;
+            return isExtra ? piesa.extraOps[opIndex] : piesa.ops[opIndex - 1];
+        }
+
+        function getNextOpNumber(piesa) {
+            let maxNum = 10;
+            (piesa.ops || []).forEach(o => { if (o && o.timerData && o.timerData.opNumber) maxNum = Math.max(maxNum, parseInt(o.timerData.opNumber) || 0); });
+            (piesa.extraOps || []).forEach(o => { if (o && o.timerData && o.timerData.opNumber) maxNum = Math.max(maxNum, parseInt(o.timerData.opNumber) || 0); });
+            return maxNum + 10;
+        }
+
+        function isUserCurrentlyWorking() {
+            const found = findMyActiveOperation();
+            return found ? `${found.piesa.cod_an} - ${found.label}` : null;
+        }
+
+        // ---------- LOCATION MODAL ----------
+        function renderLocationList(filterTerm) {
+            const listEl = document.getElementById('locationModalList');
+            const term = normalizeStr(filterTerm);
+            const items = LOCATII_OPERATII.filter(l => !term || normalizeStr(l.nume).includes(term) || normalizeStr(l.cod).includes(term));
+            if (items.length === 0) { listEl.innerHTML = '<div class="text-center py-8 text-slate-400 font-bold text-sm">Nicio locație găsită.</div>'; return; }
+            listEl.innerHTML = items.map(l => `
+                <button onclick="confirmLocation('${l.cod.replace(/'/g, "\\'")}','${l.nume.replace(/'/g, "\\'")}')" class="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-slate-200 tap-scale text-left">
+                    <span class="text-sm font-bold text-slate-700">${l.nume}</span>
+                    <span class="text-[11px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-md">${l.cod}</span>
+                </button>
+            `).join('');
+        }
+        window.openLocationModal = function(opLabel, callback) {
+            window.pendingLocationCallback = callback;
+            document.getElementById('locationModalOpName').textContent = opLabel || '';
+            document.getElementById('locationModalSearch').value = '';
+            renderLocationList('');
+            const modal = document.getElementById('locationModal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => document.getElementById('locationModalSearch').focus(), 150);
+        };
+        window.closeLocationModal = function() {
+            document.getElementById('locationModal').classList.add('opacity-0', 'pointer-events-none');
+            window.pendingLocationCallback = null;
+        };
+        window.confirmLocation = function(cod, nume) {
+            const cb = window.pendingLocationCallback;
+            closeLocationModal();
+            if (cb) cb(cod, nume);
+        };
+        document.getElementById('locationModalSearch').addEventListener('input', e => renderLocationList(e.target.value));
+        document.getElementById('btnLocationCancel').addEventListener('click', closeLocationModal);
+
+        // ---------- CONFIRM MODAL ----------
+        function openConfirmModal(title, text, onConfirm) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalText').innerHTML = text;
+            const modal = document.getElementById('confirmModal');
+            const content = document.getElementById('confirmModalContent');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('translate-y-full');
+            window.pendingConfirmAction = onConfirm;
+        }
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('confirmModalContent').classList.add('translate-y-full');
+            window.pendingConfirmAction = null;
+        }
+        document.getElementById('btnConfirmYes').addEventListener('click', () => {
+            const fn = window.pendingConfirmAction;
+            closeConfirmModal();
+            if (fn) fn();
+        });
+        document.getElementById('btnConfirmNo').addEventListener('click', closeConfirmModal);
+
+        // ---------- TIMER ACTIONS ----------
+        function findLowerUnfinishedOp(piesa, targetOp) {
+            const targetNum = (targetOp && targetOp.timerData && targetOp.timerData.opNumber) ? parseInt(targetOp.timerData.opNumber) : Infinity;
+            let blocker = null;
+            const consider = (label, timerData) => {
+                if (!timerData || !timerData.opNumber) return;
+                const num = parseInt(timerData.opNumber);
+                if (num < targetNum && timerData.status !== 'finished') {
+                    if (!blocker || num < blocker.num) blocker = { label, num };
+                }
+            };
+            (piesa.ops || []).forEach((o, idx) => consider(operatiuniNume[idx], o.timerData));
+            (piesa.extraOps || []).forEach(eo => consider(eo.text, eo.timerData));
+            return blocker;
+        }
+
+        window.handleOpAction = function(projectId, cod_an, material, dimensiune, originalIndex, opIndex, timerAction, isExtra, opLabel) {
+            const opNameForCheck = isExtra ? ((getTargetOp(projectId, originalIndex, opIndex, isExtra) || {}).text || opLabel) : operatiuniNume[opIndex - 1];
+            if (['start', 'stop', 'finish'].includes(timerAction) && !userCanDoOperation(opNameForCheck)) {
+                showToast('Nu ai rolul necesar pentru această operațiune!', 'error');
+                return;
+            }
+            if (['stop', 'finish'].includes(timerAction) && currentRole !== 'Admin') {
+                const existingOp = getTargetOp(projectId, originalIndex, opIndex, isExtra);
+                if (existingOp && existingOp.timerData && existingOp.timerData.user && existingOp.timerData.user !== currentUser) {
+                    showToast(`Pornită de ${existingOp.timerData.user}. Doar el/ea sau un Admin poate modifica!`, 'error');
+                    return;
+                }
+            }
+            if (timerAction === 'start') {
+                const proiectPtr = allProiecte.find(p => p.id === projectId);
+                const piesaPtr = proiectPtr ? proiectPtr.piese[originalIndex] : null;
+                if (piesaPtr) {
+                    const targetOpPtr = getTargetOp(projectId, originalIndex, opIndex, isExtra);
+                    const blocker = findLowerUnfinishedOp(piesaPtr, targetOpPtr);
+                    if (blocker) {
+                        showToast(`Trebuie finalizată mai întâi OP${blocker.num} · ${blocker.label} pe această piesă!`, 'warning');
+                        return;
+                    }
+                }
+                const conflict = isUserCurrentlyWorking();
+                if (conflict) { showToast(`Ai deja o operațiune în curs: ${conflict}`, 'warning'); return; }
+            }
+
+            const executeAction = async (locatieCod, locatieNume) => {
+                isUpdating = true;
+                let assignedOpNumber = null;
+                const proiect = allProiecte.find(p => p.id === projectId);
+                if (proiect) {
+                    const piesa = proiect.piese[originalIndex];
+                    if (piesa) {
+                        let targetOp = isExtra ? piesa.extraOps[opIndex] : piesa.ops[opIndex - 1];
+                        if (targetOp) {
+                            if (!targetOp.timerData) targetOp.timerData = { duration: 0, status: 'idle', sessions: [] };
+                            if (!targetOp.timerData.sessions) targetOp.timerData.sessions = [];
+                            const now = Date.now();
+                            if (timerAction === 'start') {
+                                targetOp.timerData.status = 'running';
+                                targetOp.timerData.startTime = now;
+                                if (!targetOp.timerData.firstStartTime) targetOp.timerData.firstStartTime = new Date(now).toISOString();
+                                targetOp.timerData.user = currentUser;
+                                targetOp.timerData.locatie = locatieCod || targetOp.timerData.locatie || null;
+                                targetOp.timerData.locatieNume = locatieNume || targetOp.timerData.locatieNume || null;
+                                if (!targetOp.timerData.opNumber) targetOp.timerData.opNumber = getNextOpNumber(piesa);
+                                assignedOpNumber = targetOp.timerData.opNumber;
+                                targetOp.timerData.sessions.push({ start: now, end: null, locatie: locatieCod || null });
+                            } else if (timerAction === 'stop') {
+                                targetOp.timerData.status = 'paused';
+                                if (targetOp.timerData.startTime) targetOp.timerData.duration = (targetOp.timerData.duration || 0) + Math.floor((now - targetOp.timerData.startTime) / 1000);
+                                targetOp.timerData.startTime = null; targetOp.timerData.user = currentUser;
+                            } else if (timerAction === 'finish') {
+                                if (targetOp.timerData.status === 'running' && targetOp.timerData.startTime) targetOp.timerData.duration = (targetOp.timerData.duration || 0) + Math.floor((now - targetOp.timerData.startTime) / 1000);
+                                targetOp.timerData.status = 'finished'; targetOp.timerData.startTime = null;
+                                targetOp.timerData.completedAt = new Date().toISOString(); targetOp.timerData.user = currentUser;
+                                if (!isExtra) targetOp.checked = true;
+                            }
+                            renderAll();
+                        }
+                    }
+                }
+
+                const actionName = isExtra ? 'updateExtraOperatieTimer' : 'updateOperatieTimer';
+                const payload = { action: actionName, projectId, cod_an, material, dimensiune, originalIndex, timerAction, user: currentUser, clientTime: Date.now() };
+                if (isExtra) payload.extraOpIndex = opIndex; else payload.opIndex = opIndex;
+                if (timerAction === 'start') { payload.locatie = locatieCod || null; payload.locatieNume = locatieNume || null; payload.opNumber = assignedOpNumber || null; }
+
+                try {
+                    const resp = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', body: JSON.stringify(payload) });
+                    const resJson = await resp.json();
+                    if (resJson && resJson.status === 'eroare') {
+                        showToast(resJson.mesaj || 'Eroare la salvare pe server!', 'error');
+                    }
+                } catch (e) { showToast('Eroare salvare pe server!', 'error'); }
+                finally { isUpdating = false; setTimeout(() => loadData(true), 500); }
+            };
+
+            if (timerAction === 'start') {
+                openLocationModal(opLabel || '', (cod, nume) => executeAction(cod, nume));
+                return;
+            }
+            if (timerAction === 'finish') {
+                openConfirmModal('Confirmare Finalizare', 'Ești sigur că ai finalizat această prelucrare? Timpul va fi înregistrat definitiv.', () => executeAction());
+                return;
+            }
+            executeAction();
+        };
+
+        // ---------- EXTRA OP ADD ----------
+        const OPERATII_EXTRA_PREDEFINITE = [
+            'Filetare', 'Alezare', 'Rectificare', 'Zincare', 'Tratament Termic', 'Vopsire Lichidă',
+            'Vopsire Câmp Electrostatic', 'Sablare Fină', 'Sablare cu Alice', 'Ambalare', 'Montaj Subansamble',
+            'Control CTC', 'Măsurare 3D', 'Sudură Argon', 'Sudură Laser', 'Sudură MIG-MAG', 'Îndoire Abkant',
+            'Roluire', 'Debitare Laser', 'Debitare Plasmă', 'Debitare Oxigaz', 'Frezare CNC', 'Strunjire CNC',
+            'Zencuire', 'Șanfrenare', 'Tarodare', 'Marcare Laser', 'Lipire', 'Curățare Chimică', 'Polizare Manuală',
+            'Bavurare', 'Despicare'
+        ];
+
+        window.openAddExtraOp = function(projectId, cod_an, material, dimensiune, originalIndex) {
+            window.pendingExtraOpTarget = { projectId, cod_an, material, dimensiune, originalIndex };
+            const input = document.getElementById('extraOpInput');
+            input.value = '';
+            renderExtraOpList('');
+            updateExtraOpSaveLabel('');
+            const modal = document.getElementById('extraOpModal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => input.focus(), 150);
+        };
+        function closeExtraOpModal() {
+            document.getElementById('extraOpModal').classList.add('opacity-0', 'pointer-events-none');
+        }
+        function updateExtraOpSaveLabel(text) {
+            const saveBtn = document.getElementById('btnExtraOpSave');
+            const label = document.getElementById('btnExtraOpSaveLabel');
+            if (text && text.trim()) {
+                label.textContent = text.trim();
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-40');
+            } else {
+                label.textContent = '...';
+                saveBtn.disabled = true;
+                saveBtn.classList.add('opacity-40');
+            }
+        }
+        function renderExtraOpList(filterTerm) {
+            const listEl = document.getElementById('extraOpList');
+            const term = normalizeStr(filterTerm);
+            const items = OPERATII_EXTRA_PREDEFINITE.filter(o => !term || normalizeStr(o).includes(term));
+            let html = items.map(o => `
+                <button onclick="selectExtraOpText('${o.replace(/'/g, "\\'")}')" class="w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 tap-scale text-sm font-bold text-slate-700">${o}</button>
+            `).join('');
+            if (filterTerm && filterTerm.trim() && !items.some(o => normalizeStr(o) === normalizeStr(filterTerm))) {
+                html = `<button onclick="selectExtraOpText('${filterTerm.trim().replace(/'/g, "\\'")}')" class="w-full text-left px-4 py-3.5 rounded-xl border-2 border-dashed border-abus-blue bg-blue-50 tap-scale text-sm font-black text-abus-blue">+ Adaugă „${filterTerm.trim()}" ca operație nouă</button>` + html;
+            }
+            listEl.innerHTML = html || '<div class="text-center py-8 text-slate-400 font-bold text-sm">Nicio operație găsită.</div>';
+        }
+        window.selectExtraOpText = function(text) {
+            document.getElementById('extraOpInput').value = text;
+            updateExtraOpSaveLabel(text);
+        };
+        document.getElementById('extraOpInput').addEventListener('input', (e) => {
+            renderExtraOpList(e.target.value);
+            updateExtraOpSaveLabel(e.target.value);
+        });
+        document.getElementById('btnExtraOpCancel').addEventListener('click', closeExtraOpModal);
+        document.getElementById('btnExtraOpSave').addEventListener('click', async () => {
+            const text = document.getElementById('extraOpInput').value.trim();
+            if (!text) { showToast('Alege sau scrie o denumire pentru operație.', 'warning'); return; }
+            const t = window.pendingExtraOpTarget;
+            if (!t) return;
+            closeExtraOpModal();
+            try {
+                const resp = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow',
+                    body: JSON.stringify({ action: 'addCustomOpPiesa', projectId: t.projectId, cod_an: t.cod_an, material: t.material, originalIndex: t.originalIndex, text, user: currentUser })
+                });
+                const resJson = await resp.json();
+                if (resJson && resJson.status === 'eroare') { showToast(resJson.mesaj || 'Eroare la adăugare!', 'error'); }
+                else { showToast('Operație adăugată.', 'success'); }
+            } catch (e) { showToast('Eroare la adăugare!', 'error'); }
+            finally { setTimeout(() => loadData(true), 400); }
+        });
+    </script>
+</body>
+</html>
