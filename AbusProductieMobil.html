@@ -254,11 +254,21 @@
         window.knownAvailableOpKeys = null; // null = nu am făcut încă prima verificare (nu notificăm la pornire)
 
         function requestNotifPermission(fromUserClick) {
-            if (!('Notification' in window)) return;
+            if (!('Notification' in window)) {
+                if (fromUserClick) showToast('Acest browser nu suportă notificări.', 'warning');
+                return;
+            }
             if (Notification.permission === 'default') {
                 Notification.requestPermission().then(() => updateNotifBtnState());
             } else if (fromUserClick && Notification.permission === 'denied') {
                 showToast('Notificările sunt blocate din setările browserului pentru acest site.', 'warning');
+            } else if (fromUserClick && Notification.permission === 'granted') {
+                try {
+                    new Notification('Test notificare — ABUS PROducție', { body: 'Dacă vezi asta, notificările funcționează! 🎉', tag: 'abus-test' });
+                    showToast('Notificare de test trimisă!', 'success');
+                } catch (e) {
+                    showToast('Nu am putut trimite notificarea de test.', 'error');
+                }
             }
         }
 
