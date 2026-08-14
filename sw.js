@@ -1,4 +1,4 @@
-const CACHE_NAME = 'abus-productie-v1';
+const CACHE_NAME = 'abus-productie-v2';
 const APP_SHELL = [
   './AbusProductieMobil.html',
   './manifest.json',
@@ -22,21 +22,20 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Network-first pentru date live (Google Apps Script), cache-first pentru shell-ul aplicației
+// Backend-ul (Google Apps Script) nu se trece niciodată prin cache - mereu direct din rețea
+// Restul (HTML/manifest/iconițe) - "network-first": încearcă mereu varianta proaspătă,
+// și doar dacă nu există conexiune, servește ultima variantă salvată (offline fallback).
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-  if (url.includes('script.google.com')) {
-    // Nu interceptăm cererile către backend - mereu direct din rețea
-    return;
-  }
+  if (url.includes('script.google.com')) return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, response.clone());
-          return response;
-        });
-      }).catch(() => cached);
-    })
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
