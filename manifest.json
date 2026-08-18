@@ -1,25 +1,15 @@
 {
-  "name": "ABUS PROducție - Operator",
-  "short_name": "ABUS PROducție",
-  "description": "Urmărire operații de producție - varianta pentru operatori",
-  "start_url": "./AbusProductieMobil.html",
+  "name": "ABUS PROducție",
+  "short_name": "ABUS PRO",
+  "description": "Urmărire producție ABUS - ecran mobil pentru operatori",
+  "start_url": "./productie-mobil.html",
   "scope": "./",
   "display": "standalone",
+  "background_color": "#0F2A4A",
+  "theme_color": "#0F2A4A",
   "orientation": "portrait",
-  "background_color": "#005b9f",
-  "theme_color": "#005b9f",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
