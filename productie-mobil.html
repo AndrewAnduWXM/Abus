@@ -3,983 +3,1169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROductie Mobil - Operator</title>
+    <title>ABUS PROducție - Mobil</title>
+
+    <!-- PWA: instalare ca aplicație pe telefon -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#005b9f">
+    <meta name="theme-color" content="#0F2A4A">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ABUS PROducție">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-title" content="ABUS PRO">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        abus: { blue: '#005b9f', dark: '#004375', orange: '#f39200', darkorange: '#d17e00' }
-                    },
-                    fontFamily: { sans: ['Inter', 'sans-serif'], logo: ['Arial', 'Helvetica', 'sans-serif'] }
+                        abus: { blue: '#0F2A4A', orange: '#F5821F', dark: '#111827', gray: '#F3F4F6' }
+                    }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        body { background-color: #f1f5f9; overscroll-behavior-y: contain; }
-        ::-webkit-scrollbar { display: none; }
-        .toast-message {
-            position: fixed; bottom: 20px; left: 16px; right: 16px; padding: 16px 20px;
-            border-radius: 14px; color: white; font-weight: 700; font-size: 15px;
-            z-index: 1000; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25);
-            display: none; transition: all 0.3s ease; transform: translateY(120%); opacity: 0;
-            text-align: center;
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; font-size: 17px; -webkit-tap-highlight-color: transparent; }
+        input, select, textarea, button { font-size: 17px; }
+        .slide-up { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.25s ease-in-out; }
+        ::-webkit-scrollbar { width: 0; height: 0; }
+        .btn-tap { transition: transform 0.1s, filter 0.1s; }
+        .btn-tap:active { transform: scale(0.96); filter: brightness(0.92); }
+        .pulse-dot { animation: pulseDot 1.6s infinite; }
+        @keyframes pulseDot {
+            0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
+            100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
         }
-        .toast-show { transform: translateY(0); opacity: 1; display: flex !important; align-items: center; justify-content: center; gap: 8px; }
-        .toast-error { background-color: #ef4444; }
-        .toast-success { background-color: #10b981; }
-        .toast-warning { background-color: #f59e0b; }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .tap-scale { transition: transform 0.1s ease; }
-        .tap-scale:active { transform: scale(0.96); }
-        .pulse-dot { animation: pulseDot 1.4s infinite; }
-        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-        .piece-card.role-done { opacity: 0.55; }
+        @keyframes deliveryPulseSlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+        @keyframes deliveryPulseFast { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+        .delivery-pulse-orange { animation: deliveryPulseSlow 3.5s ease-in-out infinite; }
+        .delivery-pulse-red { animation: deliveryPulseFast 0.8s ease-in-out infinite; }
     </style>
 </head>
-<body class="font-sans text-slate-800 min-h-screen flex flex-col">
+<body class="text-slate-800 antialiased">
 
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="fixed inset-0 z-[500] bg-abus-dark flex flex-col items-center justify-center px-6 transition-opacity duration-300">
-        <div class="flex items-end mb-2">
-            <span class="text-abus-orange font-black text-5xl tracking-tight font-logo">ABUS</span>
-        </div>
-        <p class="text-white/70 text-sm font-bold mb-10 tracking-wide">PROducție · Mobil Operator</p>
-
-        <form id="loginForm" class="w-full max-w-sm flex flex-col gap-4">
-            <input type="text" id="loginUser" autocomplete="username" placeholder="Utilizator" required
-                class="w-full px-5 py-4 rounded-2xl border-2 border-transparent bg-white/95 text-lg font-bold outline-none focus:border-abus-orange transition-all shadow-lg">
-            <input type="password" id="loginPass" autocomplete="current-password" placeholder="Parolă" required
-                class="w-full px-5 py-4 rounded-2xl border-2 border-transparent bg-white/95 text-lg font-bold outline-none focus:border-abus-orange transition-all shadow-lg">
-            <button type="submit" id="btnLoginBtn"
-                class="w-full py-4 rounded-2xl bg-abus-orange hover:bg-abus-darkorange text-white text-lg font-black shadow-lg tap-scale transition-colors mt-2">
-                Autentificare
-            </button>
-        </form>
-    </div>
-
-    <div id="toast" class="toast-message"><span id="toastText"></span></div>
-
-    <!-- CONFIRM MODAL -->
-    <div id="confirmModal" class="fixed inset-0 z-[900] flex items-end justify-center bg-slate-900/60 opacity-0 pointer-events-none transition-all duration-300">
-        <div id="confirmModalContent" class="bg-white p-6 rounded-t-3xl shadow-xl w-full max-w-md transform translate-y-full transition-transform duration-300">
-            <div class="w-10 h-1.5 bg-slate-200 rounded-full mx-auto mb-5"></div>
-            <h3 id="confirmModalTitle" class="text-xl font-black text-slate-800 mb-2">Confirmare</h3>
-            <p id="confirmModalText" class="text-sm text-slate-500 font-semibold mb-6 leading-relaxed"></p>
-            <div class="flex flex-col gap-3">
-                <button id="btnConfirmYes" class="w-full py-4 rounded-2xl text-base font-black bg-abus-blue hover:bg-abus-dark text-white tap-scale transition-colors shadow-sm">Da, continuă</button>
-                <button id="btnConfirmNo" class="w-full py-4 rounded-2xl text-base font-black bg-slate-100 text-slate-600 tap-scale transition-colors">Anulează</button>
+    <!-- ECRAN LOGIN -->
+    <div id="loginScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-100 p-5">
+        <div class="bg-white p-7 rounded-3xl shadow-xl w-full max-w-sm slide-up border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-abus-blue text-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-abus-blue/30">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">ABUS<span class="text-abus-orange">PROducție</span></h1>
+                <p class="text-base text-slate-500 mt-2 font-medium">Ecran producție · Mobil</p>
             </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Utilizator</label>
+                    <input type="text" id="usernameInput" required autocapitalize="off" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none transition-all text-lg font-semibold" placeholder="Nume cont">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Parolă</label>
+                    <input type="password" id="passwordInput" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none transition-all text-lg font-semibold" placeholder="••••••••">
+                </div>
+                <label class="flex items-center gap-3 py-2 select-none">
+                    <input type="checkbox" id="rememberMeInput" checked class="w-6 h-6 rounded-lg accent-abus-blue">
+                    <span class="text-base font-bold text-slate-600">Ține-mă minte pe acest telefon</span>
+                </label>
+                <button type="submit" class="btn-tap w-full bg-abus-blue text-white font-bold py-5 px-4 rounded-2xl transition-colors shadow-lg shadow-abus-blue/20 flex justify-center items-center gap-2 mt-4 text-xl">
+                    <span>Conectare</span>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </form>
         </div>
-    </div>
-
-    <!-- LOCATION MODAL -->
-    <div id="locationModal" class="fixed inset-0 z-[900] flex flex-col bg-white opacity-0 pointer-events-none transition-all duration-300">
-        <div class="flex-shrink-0 px-5 pt-6 pb-4 border-b border-slate-200 bg-white">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-black text-slate-800">Alege locația</h3>
-                <button id="btnLocationCancel" class="text-slate-400 font-bold text-sm px-3 py-1.5">Anulează</button>
-            </div>
-            <p id="locationModalOpName" class="text-xs font-bold text-abus-blue mb-3"></p>
-            <input type="text" id="locationModalSearch" placeholder="Caută locație / prescurtare..."
-                class="w-full px-4 py-3.5 bg-slate-50 rounded-xl border border-slate-300 outline-none text-base font-semibold focus:border-abus-blue">
-        </div>
-        <div id="locationModalList" class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
-    </div>
-
-    <!-- ADD EXTRA OP MODAL -->
-    <div id="extraOpModal" class="fixed inset-0 z-[900] flex flex-col bg-white opacity-0 pointer-events-none transition-all duration-300">
-        <div class="flex-shrink-0 px-5 pt-6 pb-4 border-b border-slate-200 bg-white">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-black text-slate-800">Operație suplimentară</h3>
-                <button id="btnExtraOpCancel" class="text-slate-400 font-bold text-sm px-3 py-1.5">Anulează</button>
-            </div>
-            <input type="text" id="extraOpInput" placeholder="Caută sau scrie o denumire nouă..."
-                class="w-full px-4 py-3.5 bg-slate-50 rounded-xl border border-slate-300 outline-none text-base font-semibold focus:border-abus-blue">
-        </div>
-        <div id="extraOpList" class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
-        <div class="flex-shrink-0 p-4 border-t border-slate-200 bg-white">
-            <button id="btnExtraOpSave" class="w-full py-4 rounded-2xl text-base font-black bg-slate-800 hover:bg-slate-700 text-white tap-scale transition-colors">Adaugă „<span id="btnExtraOpSaveLabel"></span>"</button>
-        </div>
-    </div>
-
-    <!-- PIECE DETAIL FULLSCREEN OVERLAY -->
-    <div id="pieceDetailOverlay" class="fixed inset-0 z-[800] bg-slate-50 opacity-0 pointer-events-none transition-opacity duration-200 flex flex-col">
-        <div class="flex-shrink-0 bg-abus-dark text-white px-4 py-4 flex items-center justify-between gap-3 shadow-md">
-            <div id="pieceDetailHeaderInfo" class="min-w-0"></div>
-            <button onclick="closePieceDetail()" class="flex-shrink-0 bg-white/10 hover:bg-white/20 rounded-full p-2.5 tap-scale">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <div id="pieceDetailBody" class="flex-1 overflow-y-auto p-3 space-y-2.5 pb-8"></div>
     </div>
 
     <!-- HEADER -->
-    <header class="bg-abus-dark text-white shadow-md flex-shrink-0 sticky top-0 z-40">
-        <div class="px-4 py-3 flex items-center justify-between gap-2">
-            <div class="flex items-end">
-                <span class="text-abus-orange font-black text-2xl tracking-tight font-logo">ABUS</span>
-                <span class="text-white/40 text-[9px] font-bold ml-1.5 mb-0.5">v13</span>
+    <header id="appHeader" class="hidden bg-abus-blue text-white sticky top-0 z-30 shadow-md">
+        <div class="px-4 py-3 flex items-center justify-between">
+            <div>
+                <div class="font-black text-lg leading-none">ABUS<span class="text-abus-orange">PRO</span></div>
+                <div id="loggedInUser" class="text-[13px] text-slate-300 font-semibold mt-0.5">-</div>
             </div>
             <div class="flex items-center gap-2">
-                <div class="text-right leading-tight">
-                    <div id="currentUserLabel" class="text-xs font-black">-</div>
-                    <div id="currentRoleLabel" class="text-[10px] font-bold text-abus-orange uppercase tracking-wider">-</div>
-                </div>
-                <button id="notifBtn" onclick="requestNotifPermission(true)" class="hidden bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors text-white/70">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                <button onclick="manualSync()" class="bg-white/10 active:bg-white/20 p-3 rounded-xl transition-colors">
+                    <svg id="syncIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
-                <button id="manualSyncBtn" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors">
-                    <svg id="syncIcon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                <button onclick="openPasswordModal()" class="bg-white/10 active:bg-white/20 p-3 rounded-xl transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </button>
-                <button id="btnLogout" class="bg-white/10 hover:bg-red-500 p-2.5 rounded-xl transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                <button onclick="logout()" class="bg-white/10 active:bg-red-500/60 p-3 rounded-xl transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
+            </div>
+        </div>
+        <!-- Bara de căutare -->
+        <div class="px-4 pb-3">
+            <div class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2.5">
+                <svg class="w-5 h-5 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="searchInput" onkeyup="filterList()" placeholder="Caută comandă, locație, AN..." class="bg-transparent outline-none border-none text-white placeholder-slate-300 w-full text-base font-medium">
             </div>
         </div>
     </header>
 
-    <!-- MY POSITION BANNER -->
-    <div id="myPositionBanner" class="px-4 py-3 bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-400 text-center">
-        Se verifică activitatea ta curentă...
+    <!-- BANNER ATENȚIONARE -->
+    <div id="breakBanner" class="hidden mx-4 mt-4 px-4 py-3.5 rounded-2xl text-sm font-black flex items-center gap-2 flex-wrap bg-amber-50 text-amber-800 border-2 border-amber-300">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span id="breakBannerText">Pauză generală activă</span>
     </div>
 
-    <!-- SEARCH -->
-    <div class="px-4 py-3 bg-white border-b border-slate-200 sticky top-[60px] z-30">
-        <input type="text" id="searchProiecte" placeholder="🔍 Caută AN, Proiect..."
-            class="w-full px-4 py-3.5 bg-slate-50 rounded-xl border border-slate-300 outline-none text-base font-semibold focus:border-abus-blue">
-    </div>
+    <div id="workBanner" class="hidden mx-4 mt-4 px-4 py-3.5 rounded-2xl text-base font-bold flex items-center gap-2 flex-wrap"></div>
 
-    <!-- MAIN LIST -->
-    <main id="lista_proiecte_container" class="flex-1 px-3 py-4 space-y-4 pb-10">
-        <div class="text-center py-16 text-slate-400 font-bold">Se încarcă...</div>
+    <!-- MAIN -->
+    <main id="appMain" class="hidden px-4 pt-4 pb-10 max-w-2xl mx-auto">
+        <div id="groupsContainer" class="space-y-4"></div>
+        <div id="emptyState" class="hidden text-center py-16 text-slate-400">
+            <svg class="w-16 h-16 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <p class="font-bold text-lg">Nicio operație găsită.</p>
+        </div>
     </main>
 
+    <!-- MODAL EDITARE LOCAȚIE -->
+    <div id="locationModal" class="fixed inset-0 bg-slate-900/70 hidden overflow-y-auto h-full w-full flex items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all scale-95 opacity-0" id="locModalContent">
+            <h3 class="text-xl font-black text-slate-800 mb-5 flex items-center gap-2">
+                <svg class="w-6 h-6 text-abus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                Editare Post de Lucru
+            </h3>
+            <label class="block text-sm font-bold text-slate-500 uppercase tracking-wide mb-2">Locație (Echipament)</label>
+            <select id="newLocationInput" onchange="onLocationSelectChange()" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none mb-4 text-lg font-semibold appearance-none"></select>
+            <label class="block text-sm font-bold text-slate-500 uppercase tracking-wide mb-2">Descriere / Observații</label>
+            <textarea id="newDescInput" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none mb-5 text-base font-medium resize-none h-24" placeholder="Detalii tehnice..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="closeLocationModal()" class="btn-tap flex-1 py-4 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-xl text-lg">Anulează</button>
+                <button onclick="saveLocation()" class="btn-tap flex-1 py-4 bg-abus-blue text-white font-bold rounded-xl shadow-md text-lg">Salvează</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SCHIMBARE PAROLĂ -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900/70 hidden overflow-y-auto h-full w-full flex items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm transform transition-all scale-95 opacity-0" id="pwdModalContent">
+            <h3 class="text-xl font-black text-slate-800 mb-5 flex items-center gap-2">
+                <svg class="w-6 h-6 text-abus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Schimbă parola
+            </h3>
+            <label class="block text-sm font-bold text-slate-500 uppercase tracking-wide mb-2">Parola actuală</label>
+            <input type="password" id="oldPasswordInput" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none mb-4 text-lg font-semibold">
+            <label class="block text-sm font-bold text-slate-500 uppercase tracking-wide mb-2">Parola nouă</label>
+            <input type="password" id="newPasswordInput" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none mb-4 text-lg font-semibold">
+            <label class="block text-sm font-bold text-slate-500 uppercase tracking-wide mb-2">Confirmă parola nouă</label>
+            <input type="password" id="confirmPasswordInput" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-abus-blue outline-none mb-5 text-lg font-semibold">
+            <div class="flex gap-3">
+                <button onclick="closePasswordModal()" class="btn-tap flex-1 py-4 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-xl text-lg">Anulează</button>
+                <button onclick="savePassword()" class="btn-tap flex-1 py-4 bg-abus-blue text-white font-bold rounded-xl shadow-md text-lg">Salvează</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VIZUALIZARE DESEN PDF (fullscreen pe mobil) -->
+    <div id="drawingModal" class="fixed inset-0 bg-slate-900 hidden z-[200]">
+        <div class="bg-slate-900 border-b border-slate-700 flex-shrink-0">
+            <div class="flex items-center justify-between px-4 py-3">
+                <h3 id="drawingModalTitle" class="text-sm font-black text-white truncate pr-4">Desen tehnic</h3>
+                <button onclick="closeDrawingModal()" class="text-white bg-white/10 active:bg-white/20 p-2.5 rounded-xl transition-colors flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="drawingModalActions" class="hidden px-4 pb-3 flex items-center gap-2"></div>
+        </div>
+        <div id="drawingModalBody" class="flex-1 overflow-auto bg-slate-100 flex items-center justify-center">
+            <span class="text-slate-400 font-medium">Se caută desenul...</span>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastContainer" class="fixed bottom-6 left-4 right-4 z-[300] flex flex-col gap-2 pointer-events-none items-center"></div>
+
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzwEc73pE5f3ops1G2-rmFKwjaNHAbVp9K9ReFqPZdxsW8dFiWu3qRgtnTuEVxuAn67/exec';
-
-        const operatiuniNume = [
-            'Debitare suplimentară', 'Gaurire', 'Sablare', 'Strunjire', 'Frezare',
-            'Tobare', 'Presare', 'Curatare', 'Indoire', 'Sudura',
-            'Vopsire', 'Pansonare'
-        ];
-
-        const LOCATII_OPERATII = [
-            { nume: "Abkant Baykal", cod: "ABK" }, { nume: "Abkant manual", cod: "APC" },
-            { nume: "Debitare OXI", cod: "MDO" }, { nume: "Ferastrau MEBA", cod: "MDF" },
-            { nume: "Ghilotina mica", cod: "GH1" }, { nume: "Ghilotina mare", cod: "GH2" },
-            { nume: "Foarfeca manuala", cod: "FM" }, { nume: "Masina debitat circulara", cod: "MDC" },
-            { nume: "Laser EAGLE", cod: "LEAG" }, { nume: "Plasma mica", cod: "PLSm" },
-            { nume: "Plasma mare", cod: "PLSM" }, { nume: "Polizor cu banda", cod: "PLZ" },
-            { nume: "Polizor", cod: "PLZ1" }, { nume: "Polizare ajustare flex", cod: "PLZ2" },
-            { nume: "Sablare noua", cod: "S" }, { nume: "Tobare1", cod: "T1" },
-            { nume: "Masina sud rotund", cod: "MSR" }, { nume: "MIG", cod: "MIG" },
-            { nume: "Banc sudura/curatare", cod: "BCAS" }, { nume: "Freza Bridgeport", cod: "FB" },
-            { nume: "Freza Wabeco", cod: "F1" }, { nume: "Freza FU36", cod: "F3" },
-            { nume: "Freza FU32", cod: "F4" }, { nume: "Strung Condor", cod: "S1" },
-            { nume: "Strung SN400", cod: "S2" }, { nume: "Strung CNC Leadwell", cod: "SCNC" },
-            { nume: "Masina gaurit monofazat", cod: "G1" }, { nume: "Masina gaurit si filetat", cod: "G2" },
-            { nume: "Masina gaurit si filetat", cod: "G3" }, { nume: "Centru AKIRA", cod: "AKR" },
-            { nume: "Presa mica M1", cod: "PR1" }, { nume: "Presa mijl. M2", cod: "PR2" },
-            { nume: "Presa mare M", cod: "PR3" }, { nume: "Banc montaj", cod: "BCM" },
-            { nume: "Banc ajustare (at presaj)", cod: "BCAP" }, { nume: "Ambalare/depozitare", cod: "BDP" },
-            { nume: "Spalare - Vopsire", cod: "SPV" }, { nume: "TRANSPORT uzinal", cod: "TRAN" }
-        ];
-
-        let currentUser = null, currentRole = null;
-        let allRecords = [], allProiecte = [];
-        let isUpdating = false;
-        window.isFetchingData = false;
-        window.expandedProjects = new Set();
-        window.showAllProiecte = false;
-        window.pendingLocationCallback = null;
-        window.pendingConfirmAction = null;
-        window.pendingExtraOpTarget = null;
-
-        function normalizeStr(s) {
-            return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-        }
-        function userCanDoOperation(opName) {
-            if (currentRole === 'Admin') return true;
-            if (!currentRole) return false;
-            const roluri = String(currentRole).split(',').map(r => normalizeStr(r)).filter(Boolean);
-            if (roluri.includes('operator')) return true;
-            const normOp = normalizeStr(opName);
-            if (!normOp) return false;
-            return roluri.some(r => normOp === r || normOp.includes(r) || r.includes(normOp));
-        }
-
-        function showToast(msg, type = 'success') {
-            const t = document.getElementById('toast');
-            t.className = `toast-message toast-${type} toast-show`;
-            document.getElementById('toastText').textContent = msg;
-            clearTimeout(window._toastTimeout);
-            window._toastTimeout = setTimeout(() => { t.className = 'toast-message'; }, 3200);
-        }
-
-        // ---------- LOGIN ----------
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const user = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value.trim();
-            const btn = document.getElementById('btnLoginBtn');
-            btn.disabled = true; btn.textContent = 'Se verifică...';
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    redirect: 'follow', body: JSON.stringify({ action: 'login', user, pass })
-                });
-                const res = await response.json();
-                if (res.status === 'succes') {
-                    localStorage.setItem('abus_user_mobil', res.user);
-                    localStorage.setItem('abus_role_mobil', res.rol);
-                    initApp(res.user, res.rol);
-                } else { showToast(res.mesaj, 'error'); }
-            } catch (err) { showToast('Eroare de conectare', 'error'); }
-            finally { btn.disabled = false; btn.textContent = 'Autentificare'; }
-        });
-
-        // ---------- NOTIFICĂRI ----------
-        window.knownAvailableOpKeys = null; // null = nu am făcut încă prima verificare (nu notificăm la pornire)
-
-        function requestNotifPermission(fromUserClick) {
-            if (!('Notification' in window)) {
-                if (fromUserClick) showToast('Acest browser nu suportă notificări.', 'warning');
-                return;
-            }
-            if (Notification.permission === 'default') {
-                Notification.requestPermission().then(() => updateNotifBtnState());
-            } else if (fromUserClick && Notification.permission === 'denied') {
-                showToast('Notificările sunt blocate din setările browserului pentru acest site.', 'warning');
-            } else if (fromUserClick && Notification.permission === 'granted') {
-                try {
-                    new Notification('Test notificare — ABUS PROducție', { body: 'Dacă vezi asta, notificările funcționează! 🎉', tag: 'abus-test' });
-                    showToast('Notificare de test trimisă!', 'success');
-                } catch (e) {
-                    showToast('Nu am putut trimite notificarea de test.', 'error');
-                }
-            }
-        }
-
-        function updateNotifBtnState() {
-            const btn = document.getElementById('notifBtn');
-            if (!btn) return;
-            if (!('Notification' in window)) { btn.classList.add('hidden'); return; }
-            btn.classList.remove('hidden');
-            if (Notification.permission === 'granted') {
-                btn.classList.add('text-emerald-400');
-                btn.title = 'Notificări active';
-            } else {
-                btn.classList.remove('text-emerald-400');
-                btn.title = 'Activează notificările';
-            }
-        }
-
-        function computeAvailableOpKeysForRole() {
-            const keys = new Map(); // key -> {label, cod_an, projNume}
-            if (currentRole === 'Admin') return keys; // Adminul nu are un "rol" de notificat
-            allProiecte.forEach(proj => {
-                (proj.piese || []).forEach((p, idx) => {
-                    (p.ops || []).forEach((op, oIdx) => {
-                        if (op.required === false) return;
-                        const opName = operatiuniNume[oIdx];
-                        if (!userCanDoOperation(opName)) return;
-                        const status = op.timerData ? op.timerData.status : 'idle';
-                        if (status !== 'idle') return; // deja pornită/pauzată/finalizată - nu e "nouă"
-                        const blocker = findLowerUnfinishedOp(p, op);
-                        if (blocker) return;
-                        keys.set(`${proj.id}|${idx}|b${oIdx}`, { label: opName, cod_an: p.cod_an, projNume: proj.nume });
-                    });
-                    (p.extraOps || []).forEach((eo, eIdx) => {
-                        if (!userCanDoOperation(eo.text)) return;
-                        const status = eo.timerData ? eo.timerData.status : 'idle';
-                        if (status !== 'idle') return;
-                        const blocker = findLowerUnfinishedOp(p, eo);
-                        if (blocker) return;
-                        keys.set(`${proj.id}|${idx}|e${eIdx}`, { label: eo.text, cod_an: p.cod_an, projNume: proj.nume });
-                    });
-                });
-            });
-            return keys;
-        }
-
-        function checkForNewWorkNotifications() {
-            const currentKeys = computeAvailableOpKeysForRole();
-            if (window.knownAvailableOpKeys === null) {
-                window.knownAvailableOpKeys = currentKeys;
-                return; // prima verificare - doar înregistrăm starea, nu notificăm retroactiv
-            }
-            const newItems = [];
-            currentKeys.forEach((info, key) => {
-                if (!window.knownAvailableOpKeys.has(key)) newItems.push(info);
-            });
-            window.knownAvailableOpKeys = currentKeys;
-            if (newItems.length === 0) return;
-
-            const first = newItems[0];
-            const bodyText = newItems.length === 1
-                ? `${first.label} pe ${first.cod_an} (${first.projNume})`
-                : `${first.label} pe ${first.cod_an} și încă ${newItems.length - 1} operații noi`;
-
-            showToast(`🔔 Operație nouă disponibilă: ${bodyText}`, 'success');
-
-            if ('Notification' in window && Notification.permission === 'granted') {
-                try {
-                    new Notification('Ai de lucru — ABUS PROducție', { body: bodyText, tag: 'abus-work-available' });
-                } catch (e) {}
-            }
-        }
-
-        function initApp(user, role) {
-            currentUser = user; currentRole = role;
-            document.getElementById('currentUserLabel').textContent = user;
-            document.getElementById('currentRoleLabel').textContent = role;
-            const loginScreen = document.getElementById('loginScreen');
-            loginScreen.style.opacity = '0';
-            setTimeout(() => { loginScreen.style.display = 'none'; }, 300);
-            requestNotifPermission(false);
-            updateNotifBtnState();
-            loadData(true);
-        }
-
-        document.getElementById('btnLogout').addEventListener('click', () => {
-            localStorage.removeItem('abus_user_mobil'); localStorage.removeItem('abus_role_mobil');
-            window.location.reload();
-        });
-
-        window.onload = () => {
-            const u = localStorage.getItem('abus_user_mobil'), r = localStorage.getItem('abus_role_mobil');
-            if (u && r) initApp(u, r);
-            if ('serviceWorker' in navigator) {
+        // URL-ul scriptului PRINCIPAL (Sheet-ul nou: Comenzi, UrmarireComenzi_OP, desene)
+        // PWA: înregistrare service worker (necesar pentru instalare pe telefon)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(() => {});
-                let refreshed = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (refreshed) return;
-                    refreshed = true;
-                    window.location.reload();
-                });
-            }
-        };
-
-        // ---------- DATA LOADING ----------
-        async function loadData(forceRender) {
-            if (window.isFetchingData) return;
-            window.isFetchingData = true;
-            try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?_=${Date.now()}`, { method: 'GET', redirect: 'follow', cache: 'no-store' });
-                const data = await response.json();
-                if (data.repere) allRecords = data.repere;
-                if (data.comenzi_lansate) allProiecte = data.comenzi_lansate;
-            } catch (error) { console.error('Eroare încărcare date:', error); }
-            finally {
-                window.isFetchingData = false;
-                renderAll();
-                checkForNewWorkNotifications();
-            }
+            });
         }
 
-        document.getElementById('manualSyncBtn').addEventListener('click', async () => {
-            const icon = document.getElementById('syncIcon'); icon.classList.add('spin');
-            await loadData(true);
-            setTimeout(() => icon.classList.remove('spin'), 800);
-        });
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGDG5av7868vPdCk-WFvj7V2sDjpywFVw8-dD2X41kpmbq2BWlp84hrgh49bHHRxT8/exec';
+        // URL-ul scriptului de AUTENTIFICARE (Sheet-ul vechi: Utilizatori - login și schimbare parolă)
+        // ⚠️ ÎNLOCUIEȘTE cu URL-ul deployment-ului scriptului auth-appscript.gs, legat de Sheet-ul vechi!
+        const AUTH_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGDG5av7868vPdCk-WFvj7V2sDjpywFVw8-dD2X41kpmbq2BWlp84hrgh49bHHRxT8/exec';
 
-        setInterval(() => { if (currentUser && !isUpdating && !window.isFetchingData) loadData(); }, 20000);
-        document.getElementById('searchProiecte').addEventListener('input', () => renderAll());
+        // Lista predefinită de locații/utilaje - cod prescurtat + denumire completă
+        const WORK_LOCATIONS = [
+            { cod: 'PLSM', nume: 'Plasma mare' },
+            { cod: 'PLSm', nume: 'Plasma mica' },
+            { cod: 'PLZ', nume: 'Polizor cu banda' },
+            { cod: 'PLZ1', nume: 'Polizor' },
+            { cod: 'PLZ2', nume: 'Polizor ajustare flex' },
+            { cod: 'S2', nume: 'Sablare noua' },
+            { cod: 'S1', nume: 'Sablare vechie' },
+            { cod: 'AKR', nume: 'Centru Akira' },
+            { cod: 'CTC', nume: 'Control tehnic de calitate' },
+            { cod: 'BDP', nume: 'Ambalare/depozitare' },
+            { cod: 'MDF', nume: 'Fierastrau MEBA' },
+            { cod: 'PR3', nume: 'Presa Mare M' },
+            { cod: 'PR2', nume: 'Presa Mijl. M2' },
+            { cod: 'T1', nume: 'Toba' },
+            { cod: 'SD1', nume: 'Sudura 1' },
+            { cod: 'SD2', nume: 'Sudura 2' },
+            { cod: 'ZNC', nume: 'Zincare' },
+            { cod: 'BCM', nume: 'Banc Montaj' },
+            { cod: 'BCAS', nume: 'Banc sudura/curatare' },
+            { cod: 'GH1', nume: 'Ghiliotina mica' },
+            { cod: 'GH2', nume: 'Ghiliotina mare' },
+            { cod: 'SPV', nume: 'Spalare-Vopsire' },
+            { cod: 'F3', nume: 'Freza FU36' },
+            { cod: 'FB', nume: 'Freza Bridgeport' },
+            { cod: 'G1', nume: 'Masina gaurit monofazat' },
+            { cod: 'G2', nume: 'Masina de gaurit si filetat' },
+            { cod: 'SPL', nume: 'Masina de spalat' },
+            { cod: 'STR1', nume: 'Strung clasic Weiller Condor' },
+            { cod: 'SCNC', nume: 'Strung CNC Leadwell' },
+            { cod: 'SN400', nume: 'Strung clasic SN400' },
+            { cod: 'ABK', nume: 'Abkant Baykal' }
+        ];
 
-        function renderAll() {
-            renderMyPositionBanner();
-            renderProiecteList();
-            if (window.openPdOd) renderPieceDetail();
+        // Pauze fixe zilnice - nimic nu poate porni în acest interval, tot ce e activ se pune pe pauză automat
+        const BREAK_PERIODS = [
+            { start: '10:30', end: '11:00' },
+            { start: '19:00', end: '19:30' }
+        ];
+
+        function timeToMinutes(t) {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
         }
 
-        // ---------- MY POSITION BANNER ----------
-        function findMyActiveOperation() {
-            if (!currentUser) return null;
-            for (const proj of allProiecte) {
-                if (!proj.piese) continue;
-                for (let idx = 0; idx < proj.piese.length; idx++) {
-                    const p = proj.piese[idx];
-                    if (p.ops) {
-                        for (let oIdx = 0; oIdx < p.ops.length; oIdx++) {
-                            const op = p.ops[oIdx];
-                            if (op && op.timerData && op.timerData.status === 'running' && op.timerData.user === currentUser) {
-                                const label = (op.timerData.opNumber ? `OP${op.timerData.opNumber} · ` : '') + operatiuniNume[oIdx];
-                                return { proj, piesa: p, originalIndex: idx, label, timerData: op.timerData };
-                            }
-                        }
-                    }
-                    if (p.extraOps) {
-                        for (const eo of p.extraOps) {
-                            if (eo && eo.timerData && eo.timerData.status === 'running' && eo.timerData.user === currentUser) {
-                                const label = (eo.timerData.opNumber ? `OP${eo.timerData.opNumber} · ` : '') + eo.text;
-                                return { proj, piesa: p, originalIndex: idx, label, timerData: eo.timerData };
-                            }
-                        }
-                    }
-                }
+        function getCurrentBreakPeriod() {
+            const now = new Date();
+            const mins = now.getHours() * 60 + now.getMinutes();
+            for (const b of BREAK_PERIODS) {
+                if (mins >= timeToMinutes(b.start) && mins < timeToMinutes(b.end)) return b;
             }
             return null;
         }
 
-        function renderMyPositionBanner() {
-            const el = document.getElementById('myPositionBanner');
-            const found = findMyActiveOperation();
-            if (!found) {
-                el.className = 'px-4 py-3 bg-slate-100 border-b border-slate-200 text-sm font-bold text-slate-400 text-center';
-                el.innerHTML = 'Nu ai niciun cronometru pornit acum.';
-                return;
+        function isAutoPausedForBreak(op) {
+            if (op.status !== 'paused') return false;
+            const log = op.processLog || [];
+            for (let i = log.length - 1; i >= 0; i--) {
+                if (log[i].action === 'pauza') return !!log[i].autoBreak;
+                if (log[i].action === 'start' || log[i].action === 'resume' || log[i].action === 'stop' || log[i].action === 'stop_partial') return false;
             }
-            const locLine = (found.timerData && (found.timerData.locatie || found.timerData.locatieNume))
-                ? `<div class="text-sm font-bold text-blue-500 truncate mt-0.5">📍 ${found.timerData.locatieNume || ''}${found.timerData.locatie ? ` (${found.timerData.locatie})` : ''}</div>`
-                : '';
-            el.className = 'px-4 py-3 bg-blue-50 border-b border-blue-200';
-            el.innerHTML = `
-                <button onclick="goToMyPosition('${found.proj.id}', ${found.originalIndex})" class="w-full flex items-center justify-between gap-2 tap-scale">
-                    <div class="text-left min-w-0">
-                        <div class="flex items-center gap-1.5 text-blue-600 text-xs font-black uppercase tracking-wide mb-0.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 pulse-dot"></span> Ești aici
-                        </div>
-                        <div class="text-base font-black text-blue-900 truncate">${found.proj.nume || '-'}</div>
-                        <div class="text-sm font-bold text-blue-700 truncate">${found.piesa.cod_an} · ${found.label}</div>
-                        ${locLine}
-                    </div>
-                    <svg class="w-6 h-6 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
-                </button>
-            `;
+            return false;
         }
 
-        window.goToMyPosition = function(projId, originalIndex) {
-            window.openPieceDetail(projId, originalIndex);
-        };
+        async function autoTransitionOp(op, newStatus, isBreakStart) {
+            const now = new Date().toISOString();
+            if (!op.timestamps) op.timestamps = { start: null, pauses: [], stop: null };
+            if (!op.timestamps.pauses) op.timestamps.pauses = [];
+            if (!op.processLog) op.processLog = [];
 
-        // ---------- ROLE FILTER + PROJECT LIST ----------
-        function renderProiecteList() {
-            const container = document.getElementById('lista_proiecte_container');
-            const searchTerm = String(document.getElementById('searchProiecte').value || '').toLowerCase().trim();
-
-            let filtered = allProiecte;
-            if (searchTerm) {
-                filtered = filtered.filter(proj => {
-                    const matchNume = String(proj.nume || '').toLowerCase().includes(searchTerm);
-                    const matchPiese = proj.piese && proj.piese.some(p => String(p.cod_an || '').toLowerCase().includes(searchTerm));
-                    return matchNume || matchPiese;
-                });
-            }
-
-            if (currentRole !== 'Admin') {
-                filtered = filtered.filter(proj => {
-                    if (!proj.piese) return false;
-                    return proj.piese.some(p => {
-                        const hasBase = (p.ops || []).some((op, idx) => op.required !== false && userCanDoOperation(operatiuniNume[idx]) && (!op.timerData || op.timerData.status !== 'finished'));
-                        const hasExtra = (p.extraOps || []).some(eo => userCanDoOperation(eo.text) && (!eo.timerData || eo.timerData.status !== 'finished'));
-                        return hasBase || hasExtra;
-                    });
-                });
-            }
-
-            filtered.forEach(proj => {
-                let total = 0, done = 0;
-                (proj.piese || []).forEach(p => (p.ops || []).forEach(o => { if (o.required !== false) { total++; if (o.timerData && o.timerData.status === 'finished') done++; } }));
-                proj._isCompleted = total > 0 && done === total;
-                proj._progress = total === 0 ? 0 : Math.round((done / total) * 100);
-            });
-            filtered.sort((a, b) => {
-                if (a._isCompleted !== b._isCompleted) return a._isCompleted ? 1 : -1;
-                return new Date(b.data) - new Date(a.data);
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 font-bold">${searchTerm ? 'Niciun rezultat.' : 'Nimic de lucru momentan.'}</div>`;
-                return;
-            }
-
-            const LIMITA = 5;
-            const toShow = window.showAllProiecte ? filtered : filtered.slice(0, LIMITA);
-
-            container.innerHTML = toShow.map(proj => renderProjectCard(proj)).join('') + (filtered.length > LIMITA ? (
-                window.showAllProiecte
-                    ? `<button onclick="toggleShowAll()" class="w-full py-3 text-xs font-black text-abus-blue underline">Arată doar ultimele ${LIMITA}</button>`
-                    : `<button onclick="toggleShowAll()" class="w-full py-3.5 rounded-2xl bg-slate-100 text-slate-700 text-sm font-black tap-scale">Mai multe (${filtered.length - LIMITA}) →</button>`
-            ) : '');
-        }
-
-        window.toggleShowAll = function() { window.showAllProiecte = !window.showAllProiecte; renderProiecteList(); };
-
-        window.openPdOd = null; // { projectId, originalIndex } - currently open piece detail
-
-        window.openPieceDetail = function(projectId, originalIndex) {
-            window.openPdOd = { projectId, originalIndex };
-            renderPieceDetail();
-            const overlay = document.getElementById('pieceDetailOverlay');
-            overlay.classList.remove('opacity-0', 'pointer-events-none');
-        };
-
-        window.closePieceDetail = function() {
-            window.openPdOd = null;
-            const overlay = document.getElementById('pieceDetailOverlay');
-            overlay.classList.add('opacity-0', 'pointer-events-none');
-        };
-
-        function renderPieceDetail() {
-            if (!window.openPdOd) return;
-            const { projectId, originalIndex } = window.openPdOd;
-            const proj = allProiecte.find(pr => pr.id === projectId);
-            if (!proj) { closePieceDetail(); return; }
-            const rawP = proj.piese[originalIndex];
-            if (!rawP) { closePieceDetail(); return; }
-            const p = { ...rawP, originalIndex };
-
-            const lgLabel = getLgLabel(p.material);
-            document.getElementById('pieceDetailHeaderInfo').innerHTML = `
-                <div class="flex items-center gap-2 flex-wrap mb-1">
-                    <span class="font-black text-2xl tracking-wide">${p.cod_an}</span>
-                    <span class="bg-white/15 text-white/70 border border-white/20 text-xs font-black px-1.5 py-0.5 rounded-md">OP10 ✓</span>
-                </div>
-                <div class="text-sm font-bold text-white/70 truncate mb-1.5">${proj.nume} · ${p.material} · ${p.necesar} buc</div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-sm font-black bg-white/15 px-2 py-1 rounded-md">L: ${p.dimensiune}</span>
-                    <span class="text-sm font-black bg-white/15 px-2 py-1 rounded-md">${lgLabel}: ${p.latura_taiere}mm</span>
-                </div>
-            `;
-
-            const opsHtml = (p.ops || []).map((op, idx) => renderOpRow(proj, p, op, idx)).filter(Boolean).join('');
-            const extraHtml = (p.extraOps || []).map((eo, idx) => renderExtraOpRow(proj, p, eo, idx)).join('');
-
-            document.getElementById('pieceDetailBody').innerHTML = `
-                <button onclick="cautaSiDeschidePDF('${p.cod_an}')" class="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 font-black text-base tap-scale mb-1">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Vezi desenul (PDF)
-                </button>
-                ${opsHtml}
-                ${extraHtml}
-                <button onclick="openAddExtraOp('${proj.id}', '${p.cod_an}', '${p.material}', '${p.dimensiune}', ${p.originalIndex})" class="w-full py-3.5 rounded-xl border-2 border-dashed border-slate-300 text-slate-500 text-sm font-black tap-scale mt-1">+ Operație suplimentară</button>
-            `;
-        }
-
-        window.cautaSiDeschidePDF = async function(codAnRaw) {
-            const codAN = String(codAnRaw || '').split('.')[0].trim();
-            if (!codAN) return;
-            try {
-                showToast(`Se caută desenul ${codAN}.pdf...`);
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    redirect: 'follow', body: JSON.stringify({ action: 'cautaPDF', an: codAN })
-                });
-                const res = await response.json();
-                if (res.status === 'succes' && res.url) {
-                    window.open(res.url, '_blank');
-                } else {
-                    showToast(res.mesaj || `Desenul ${codAN}.pdf nu a fost găsit.`, 'error');
-                }
-            } catch (err) {
-                showToast('Eroare la căutarea desenului!', 'error');
-            }
-        };
-
-        window.toggleProject = function(projId) {
-            if (window.expandedProjects.has(projId)) window.expandedProjects.delete(projId);
-            else window.expandedProjects.add(projId);
-            renderProiecteList();
-        };
-
-        function renderProjectCard(proj) {
-            const isOpen = window.expandedProjects.has(proj.id);
-            const totalPiese = (proj.piese || []).length;
-            const mainANs = [...new Set((proj.piese || []).map(p => String(p.cod_an).split('.')[0].toUpperCase()))].join(', ');
-
-            const piecesHtml = isOpen ? (proj.piese || []).map((p, idx) => renderPieceCard(proj, { ...p, originalIndex: idx })).join('') : '';
-
-            return `
-                <div id="proj-${proj.id}" class="bg-white rounded-2xl shadow-sm border ${proj._isCompleted ? 'border-emerald-200' : 'border-slate-200'} overflow-hidden">
-                    <button onclick="toggleProject('${proj.id}')" class="w-full text-left p-4 flex items-center justify-between gap-3 tap-scale">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="font-black text-lg text-slate-800 truncate">${proj.nume || '-'}</span>
-                                ${proj._isCompleted ? '<span class="bg-emerald-100 text-emerald-700 text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0">FINALIZAT</span>' : ''}
-                            </div>
-                            <div class="text-sm font-bold text-slate-500 mt-1 truncate">Piese: ${totalPiese} · AN: ${mainANs}</div>
-                            <div class="w-full h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
-                                <div class="h-full ${proj._progress === 100 ? 'bg-emerald-500' : 'bg-abus-blue'} rounded-full" style="width:${proj._progress}%"></div>
-                            </div>
-                        </div>
-                        <svg class="w-6 h-6 text-slate-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                    ${isOpen ? `<div class="border-t border-slate-100 bg-slate-50/60 p-2.5 space-y-2.5">${piecesHtml}</div>` : ''}
-                </div>
-            `;
-        }
-
-        function getLgLabel(material) {
-            const m = String(material || '').toLowerCase();
-            if (m.includes('teav') || m.includes('țeav')) return 'Latură';
-            if (m.includes('tabl') || m.includes('tăbl')) return 'Grosime';
-            return 'Latură/Gros.';
-        }
-
-        function renderPieceCard(proj, p) {
-            let rolTotal = 0, rolDone = 0;
-            (p.ops || []).forEach((op, idx) => { if (op.required !== false && userCanDoOperation(operatiuniNume[idx])) { rolTotal++; if (op.timerData && op.timerData.status === 'finished') rolDone++; } });
-            (p.extraOps || []).forEach(eo => { if (userCanDoOperation(eo.text)) { rolTotal++; if (eo.timerData && eo.timerData.status === 'finished') rolDone++; } });
-            const rolBadge = rolTotal === 0 ? '' : (rolDone === rolTotal
-                ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black px-2 py-1 rounded-lg flex-shrink-0">✓ Terminat</span>`
-                : `<span class="bg-orange-50 text-abus-orange border border-orange-200 text-xs font-black px-2 py-1 rounded-lg flex-shrink-0">De lucru ${rolDone}/${rolTotal}</span>`);
-            const lgLabel = getLgLabel(p.material);
-
-            return `
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-stretch">
-                    <button onclick="openPieceDetail('${proj.id}', ${p.originalIndex})" class="flex-1 text-left p-4 tap-scale min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap mb-1.5">
-                            <span class="font-black text-2xl text-slate-800 tracking-wide">${p.cod_an}</span>
-                            <span class="bg-slate-100 text-slate-500 border border-slate-200 text-xs font-black px-1.5 py-0.5 rounded-md flex-shrink-0">OP10 ✓</span>
-                        </div>
-                        <div class="text-base font-bold text-slate-600 truncate">${p.material} · ${p.necesar} buc</div>
-                        <div class="flex items-center gap-2 mt-1 flex-wrap">
-                            <span class="text-sm font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">L: ${p.dimensiune}</span>
-                            <span class="text-sm font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">${lgLabel}: ${p.latura_taiere}mm</span>
-                        </div>
-                        <div class="mt-2">${rolBadge}</div>
-                    </button>
-                    <button onclick="event.stopPropagation(); cautaSiDeschidePDF('${p.cod_an}')" class="flex-shrink-0 w-16 flex flex-col items-center justify-center gap-1 bg-slate-50 border-l border-slate-200 text-slate-500 tap-scale">
-                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        <span class="text-[11px] font-black">Desen</span>
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderOpRow(proj, p, op, idx) {
-            if (op.required === false) return '';
-            const opName = operatiuniNume[idx];
-            const canOperate = userCanDoOperation(opName);
-            const status = op.timerData ? op.timerData.status : 'idle';
-            const blocker = (status === 'running' || status === 'finished') ? null : findLowerUnfinishedOp(p, op);
-            return renderOpControl(proj.id, p.cod_an, p.material, p.dimensiune, p.originalIndex, idx + 1, false, op.timerData, opName, canOperate, blocker);
-        }
-
-        function renderExtraOpRow(proj, p, eo, idx) {
-            const canOperate = userCanDoOperation(eo.text);
-            const status = eo.timerData ? eo.timerData.status : 'idle';
-            const blocker = (status === 'running' || status === 'finished') ? null : findLowerUnfinishedOp(p, eo);
-            return renderOpControl(proj.id, p.cod_an, p.material, p.dimensiune, p.originalIndex, idx, true, eo.timerData, eo.text, canOperate, blocker);
-        }
-
-        function renderOpControl(projectId, cod_an, material, dimensiune, originalIndex, opIndex, isExtra, timerData, opLabel, canOperate, seqBlocker) {
-            const tData = timerData || { status: 'idle' };
-            const status = tData.status;
-            const isOwner = !tData.user || tData.user === currentUser || currentRole === 'Admin';
-            const lockedByOther = canOperate && (status === 'running' || status === 'paused') && !isOwner;
-            const blockedBySequence = canOperate && !lockedByOther && seqBlocker && status !== 'running' && status !== 'finished';
-            const viewOnly = !canOperate || lockedByOther || blockedBySequence;
-            const opNumPrefix = tData.opNumber ? `OP${tData.opNumber} · ` : '';
-            const locHtml = (tData.locatie || tData.locatieNume) ? `<div class="text-sm font-bold text-abus-blue mt-1">📍 ${tData.locatieNume || ''}${tData.locatie ? ` (${tData.locatie})` : ''}</div>` : '';
-
-            let rightHtml = '';
-            if (viewOnly) {
-                let label = 'Neînceput', color = 'text-slate-400', dot = 'bg-slate-300';
-                if (status === 'finished') { label = 'Finalizat'; color = 'text-emerald-600'; dot = 'bg-emerald-500'; }
-                else if (status === 'running') { label = lockedByOther ? `În lucru (${tData.user})` : 'În lucru'; color = 'text-blue-600'; dot = 'bg-blue-500'; }
-                else if (status === 'paused') { label = 'Pauzat'; color = 'text-amber-600'; dot = 'bg-amber-500'; }
-                else if (blockedBySequence) { label = `Așteaptă OP${seqBlocker.num}`; color = 'text-slate-400'; dot = 'bg-slate-300'; }
-                rightHtml = `<div class="flex items-center gap-1.5 ${color} text-sm font-black"><span class="w-2.5 h-2.5 rounded-full ${dot}"></span>${label}<svg class="w-4 h-4 ml-0.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>`;
-            } else if (status === 'finished') {
-                rightHtml = `<div class="flex items-center gap-1.5 text-emerald-600 text-sm font-black"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>Finalizat</div>`;
-            } else if (status === 'running') {
-                rightHtml = `
-                    <div class="flex items-center gap-2">
-                        <button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'stop',${isExtra})" class="px-4 py-3 rounded-lg bg-amber-100 text-amber-700 font-black text-sm tap-scale">Pauză</button>
-                        <button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'finish',${isExtra})" class="px-4 py-3 rounded-lg bg-emerald-500 text-white font-black text-sm tap-scale">Finalizare</button>
-                    </div>
-                `;
+            if (newStatus === 'paused') {
+                op.timestamps.pauses.push({ type: 'start', time: now });
+                op.processLog.push({ action: 'pauza', time: now, user: 'Sistem (pauză generală)', autoBreak: true });
             } else {
-                rightHtml = `
-                    <div class="flex items-center gap-2">
-                        <button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'start',${isExtra},'${String(opLabel).replace(/'/g, "\\'")}')" class="px-5 py-3 rounded-lg bg-abus-blue text-white font-black text-sm tap-scale">${status === 'paused' ? 'Continuă' : 'Start'}</button>
-                        ${status === 'paused' ? `<button onclick="handleOpAction('${projectId}','${cod_an}','${material}','${dimensiune}',${originalIndex},${opIndex},'finish',${isExtra})" class="px-4 py-3 rounded-lg bg-emerald-500 text-white font-black text-sm tap-scale">Finalizare</button>` : ''}
-                    </div>
-                `;
+                op.timestamps.pauses.push({ type: 'end', time: now });
+                op.processLog.push({ action: 'resume', time: now, user: 'Sistem (pauză generală)' });
+            }
+            op.status = newStatus;
+
+            if (op.operator === appState.currentUser.nume) {
+                showToast(isBreakStart
+                    ? `⏸ Pauză generală — "${op.template.locatie || '-'}" a fost pusă automat pe pauză.`
+                    : `▶ Pauza s-a terminat — "${op.template.locatie || '-'}" a fost reluată automat.`);
             }
 
-            return `
-                <div class="flex items-center justify-between gap-2 p-3.5 rounded-xl border ${status === 'running' ? 'border-blue-300 bg-blue-50/50' : 'border-slate-200 bg-white'} ${viewOnly ? 'opacity-70' : ''}">
-                    <div class="min-w-0 flex-1">
-                        <div class="text-base font-black text-slate-800 truncate">${opNumPrefix}${opLabel}</div>
-                        ${locHtml}
-                    </div>
-                    ${rightHtml}
-                </div>
-            `;
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOperation', opData: op }) });
+            } catch (e) {}
         }
 
-        // ---------- HELPERS FOR STATE ----------
-        function getTargetOp(projectId, originalIndex, opIndex, isExtra) {
-            const proiect = allProiecte.find(p => p.id === projectId);
-            if (!proiect) return null;
-            const piesa = proiect.piese[originalIndex];
-            if (!piesa) return null;
-            return isExtra ? piesa.extraOps[opIndex] : piesa.ops[opIndex - 1];
+        function updateBreakBanner() {
+            const banner = document.getElementById('breakBanner');
+            if (!banner) return;
+            const activeBreak = getCurrentBreakPeriod();
+            if (activeBreak) {
+                banner.classList.remove('hidden');
+                document.getElementById('breakBannerText').textContent = `Pauză generală (${activeBreak.start}-${activeBreak.end}) — START blocat, ce era activ e pe pauză.`;
+            } else {
+                banner.classList.add('hidden');
+            }
         }
 
-        function getNextOpNumber(piesa) {
-            let maxNum = 10;
-            (piesa.ops || []).forEach(o => { if (o && o.timerData && o.timerData.opNumber) maxNum = Math.max(maxNum, parseInt(o.timerData.opNumber) || 0); });
-            (piesa.extraOps || []).forEach(o => { if (o && o.timerData && o.timerData.opNumber) maxNum = Math.max(maxNum, parseInt(o.timerData.opNumber) || 0); });
-            return maxNum + 10;
+        async function checkBreakAutoPause() {
+            updateBreakBanner();
+            const currentBreak = getCurrentBreakPeriod();
+            let changed = false;
+
+            if (currentBreak) {
+                const toPause = appState.operations.filter(o => o.status === 'active');
+                for (const op of toPause) { await autoTransitionOp(op, 'paused', true); changed = true; }
+            } else {
+                const toResume = appState.operations.filter(o => o.status === 'paused' && isAutoPausedForBreak(o));
+                for (const op of toResume) { await autoTransitionOp(op, 'active', false); changed = true; }
+            }
+
+            if (changed) renderList();
         }
 
-        function isUserCurrentlyWorking() {
-            const found = findMyActiveOperation();
-            return found ? `${found.piesa.cod_an} - ${found.label}` : null;
-        }
-
-        // ---------- LOCATION MODAL ----------
-        function renderLocationList(filterTerm) {
-            const listEl = document.getElementById('locationModalList');
-            const term = normalizeStr(filterTerm);
-            const items = LOCATII_OPERATII.filter(l => !term || normalizeStr(l.nume).includes(term) || normalizeStr(l.cod).includes(term));
-            if (items.length === 0) { listEl.innerHTML = '<div class="text-center py-8 text-slate-400 font-bold text-sm">Nicio locație găsită.</div>'; return; }
-            listEl.innerHTML = items.map(l => `
-                <button onclick="confirmLocation('${l.cod.replace(/'/g, "\\'")}','${l.nume.replace(/'/g, "\\'")}')" class="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-slate-200 tap-scale text-left">
-                    <span class="text-sm font-bold text-slate-700">${l.nume}</span>
-                    <span class="text-[11px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-md">${l.cod}</span>
-                </button>
-            `).join('');
-        }
-        window.openLocationModal = function(opLabel, callback) {
-            window.pendingLocationCallback = callback;
-            document.getElementById('locationModalOpName').textContent = opLabel || '';
-            document.getElementById('locationModalSearch').value = '';
-            renderLocationList('');
-            const modal = document.getElementById('locationModal');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => document.getElementById('locationModalSearch').focus(), 150);
+        const appState = {
+            currentUser: null,
+            operations: [],
+            locationEditOpId: null,
+            syncInterval: null,
+            expandedGroups: {},
+            isLocallyInteracting: false
         };
-        window.closeLocationModal = function() {
-            document.getElementById('locationModal').classList.add('opacity-0', 'pointer-events-none');
-            window.pendingLocationCallback = null;
-        };
-        window.confirmLocation = function(cod, nume) {
-            const cb = window.pendingLocationCallback;
-            closeLocationModal();
-            if (cb) cb(cod, nume);
-        };
-        document.getElementById('locationModalSearch').addEventListener('input', e => renderLocationList(e.target.value));
-        document.getElementById('btnLocationCancel').addEventListener('click', closeLocationModal);
 
-        // ---------- CONFIRM MODAL ----------
-        function openConfirmModal(title, text, onConfirm) {
-            document.getElementById('confirmModalTitle').textContent = title;
-            document.getElementById('confirmModalText').innerHTML = text;
-            const modal = document.getElementById('confirmModal');
-            const content = document.getElementById('confirmModalContent');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            content.classList.remove('translate-y-full');
-            window.pendingConfirmAction = onConfirm;
-        }
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('confirmModalContent').classList.add('translate-y-full');
-            window.pendingConfirmAction = null;
-        }
-        document.getElementById('btnConfirmYes').addEventListener('click', () => {
-            const fn = window.pendingConfirmAction;
-            closeConfirmModal();
-            if (fn) fn();
-        });
-        document.getElementById('btnConfirmNo').addEventListener('click', closeConfirmModal);
+        const loginScreen = document.getElementById('loginScreen');
+        const appHeader = document.getElementById('appHeader');
+        const appMain = document.getElementById('appMain');
+        const groupsContainer = document.getElementById('groupsContainer');
 
-        // ---------- TIMER ACTIONS ----------
-        function findLowerUnfinishedOp(piesa, targetOp) {
-            const targetNum = (targetOp && targetOp.timerData && targetOp.timerData.opNumber) ? parseInt(targetOp.timerData.opNumber) : Infinity;
-            let blocker = null;
-            const consider = (label, timerData) => {
-                if (!timerData || !timerData.opNumber) return;
-                const num = parseInt(timerData.opNumber);
-                if (num < targetNum && timerData.status !== 'finished') {
-                    if (!blocker || num < blocker.num) blocker = { label, num };
+        // ============= LOGIN =============
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Se verifică...`;
+
+            try {
+                const response = await fetch(AUTH_SCRIPT_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'login', username, password })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    appState.currentUser = data.user;
+                    const rememberMe = document.getElementById('rememberMeInput').checked;
+                    if (rememberMe) {
+                        localStorage.setItem('abusMobilUser', JSON.stringify(data.user));
+                    } else {
+                        localStorage.removeItem('abusMobilUser');
+                    }
+                    completeLogin();
+                } else {
+                    showToast(data.error || "Utilizator sau parolă incorecte.", true);
                 }
-            };
-            (piesa.ops || []).forEach((o, idx) => consider(operatiuniNume[idx], o.timerData));
-            (piesa.extraOps || []).forEach(eo => consider(eo.text, eo.timerData));
-            return blocker;
+            } catch (error) {
+                showToast("Eroare de conexiune cu serverul.", true);
+            } finally {
+                btn.innerHTML = originalText;
+            }
+        });
+
+        function completeLogin() {
+            loginScreen.classList.add('hidden');
+            appHeader.classList.remove('hidden');
+            appMain.classList.remove('hidden');
+            document.getElementById('loggedInUser').textContent = `${appState.currentUser.nume} · ${appState.currentUser.rol}`;
+
+            fetchData(true);
+            setInterval(updateLiveTimers, 30000);
+            appState.syncInterval = setInterval(() => {
+                if (!appState.isLocallyInteracting) fetchData(true);
+            }, 10000);
         }
 
-        window.handleOpAction = function(projectId, cod_an, material, dimensiune, originalIndex, opIndex, timerAction, isExtra, opLabel) {
-            const opNameForCheck = isExtra ? ((getTargetOp(projectId, originalIndex, opIndex, isExtra) || {}).text || opLabel) : operatiuniNume[opIndex - 1];
-            if (['start', 'stop', 'finish'].includes(timerAction) && !userCanDoOperation(opNameForCheck)) {
-                showToast('Nu ai rolul necesar pentru această operațiune!', 'error');
+        window.logout = function() {
+            appState.currentUser = null; appState.operations = [];
+            localStorage.removeItem('abusMobilUser');
+            if (appState.syncInterval) clearInterval(appState.syncInterval);
+            loginScreen.classList.remove('hidden');
+            appHeader.classList.add('hidden');
+            appMain.classList.add('hidden');
+            document.getElementById('passwordInput').value = '';
+        };
+
+        // Auto-conectare dacă există o sesiune salvată (Ține-mă minte)
+        (function tryAutoLogin() {
+            try {
+                const saved = localStorage.getItem('abusMobilUser');
+                if (saved) {
+                    appState.currentUser = JSON.parse(saved);
+                    completeLogin();
+                }
+            } catch (e) { localStorage.removeItem('abusMobilUser'); }
+        })();
+
+        window.manualSync = function() { fetchData(false); };
+
+        async function fetchData(silent = true) {
+            const syncIcon = document.getElementById('syncIcon');
+            if (syncIcon && !silent) syncIcon.classList.add('animate-spin');
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&_ts=${Date.now()}`, { cache: 'no-store' });
+                const data = await response.json();
+                if (data.success && !appState.isLocallyInteracting) {
+                    appState.operations = data.operations || [];
+                    renderList();
+                    checkBreakAutoPause();
+                }
+            } catch (error) {
+                if (!silent) showToast("Eroare la preluarea datelor.", true);
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // ============= HELPERS (identice cu aplicația principală) =============
+        const mobileMonthsShort = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
+
+        // Parsează data de livrare, indiferent de format: dd.mm.yyyy (nou) sau yyyy-mm-dd (vechi/moștenit)
+        function parseDataLivrare(dateStr) {
+            if (!dateStr) return null;
+            const s = String(dateStr).trim();
+            if (s.includes('.')) {
+                const parts = s.split('.');
+                if (parts.length === 3) {
+                    const d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                    return isNaN(d.getTime()) ? null : d;
+                }
+            }
+            const d = new Date(s);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function formatDataLivrare(dateStr) {
+            if (!dateStr) return 'Fără dată';
+            const d = parseDataLivrare(dateStr);
+            if (!d) return dateStr;
+            const day = String(d.getDate()).padStart(2, '0');
+            return `ABUS LIVRARE ${day}.${mobileMonthsShort[d.getMonth()]}.${d.getFullYear()}`;
+        }
+
+        function getDeliveryUrgencyLevel(dateStr) {
+            if (!dateStr) return null;
+            const d = parseDataLivrare(dateStr);
+            if (!d) return null;
+            const now = new Date(); now.setHours(0, 0, 0, 0);
+            d.setHours(0, 0, 0, 0);
+            const daysLeft = Math.round((d - now) / 86400000);
+            if (daysLeft > 21) return 'green';
+            if (daysLeft > 7) return 'orange';
+            return 'red';
+        }
+
+        function getDeliveryTextClass(dateStr) {
+            const level = getDeliveryUrgencyLevel(dateStr);
+            if (level === 'green') return 'text-green-300';
+            if (level === 'orange') return 'text-abus-orange delivery-pulse-orange';
+            if (level === 'red') return 'text-red-400 delivery-pulse-red';
+            return 'text-white';
+        }
+
+        function sanitizeId(id) {
+            let s = String(id);
+            if (s.includes('T') && s.includes('Z')) {
+                let d = new Date(s);
+                if (!isNaN(d.getTime())) return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
+            }
+            return s;
+        }
+
+        function extractOpSeq(template) {
+            if (template.opSeq !== undefined && template.opSeq !== '') return parseInt(template.opSeq, 10) || 0;
+            const idOp = String(template.id_op || '');
+            const parenMatch = idOp.match(/\((\d+)\)/);
+            if (parenMatch) return parseInt(parenMatch[1], 10);
+            return parseInt(idOp.replace(/\D/g, '')) || 0;
+        }
+
+        function calculateElapsedTime(op) {
+            if (!op.timestamps || !op.timestamps.start) return 0;
+            let now = new Date();
+            let end = op.timestamps.stop ? new Date(op.timestamps.stop) : now;
+            let totalMs = end - new Date(op.timestamps.start);
+            let pauseMs = 0, currentPauseStart = null;
+            (op.timestamps.pauses || []).forEach(p => {
+                if (p.type === 'start') currentPauseStart = new Date(p.time);
+                else if (p.type === 'end' && currentPauseStart) { pauseMs += (new Date(p.time) - currentPauseStart); currentPauseStart = null; }
+            });
+            if (currentPauseStart && !op.timestamps.stop) pauseMs += (now - currentPauseStart);
+            return Math.max(0, Math.floor((totalMs - pauseMs) / 60000));
+        }
+
+        function operatorHasFunction(op) {
+            if (!appState.currentUser) return false;
+            if (appState.currentUser.rol === 'Admin') return true;
+            const locatie = (op.template.locatie || '').trim().toLowerCase();
+            if (!locatie) return true;
+            const functii = (appState.currentUser.functii || '').split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
+            return functii.includes(locatie);
+        }
+
+        function isCurrentSessionPartial(op) {
+            const log = op.processLog || [];
+            for (let i = log.length - 1; i >= 0; i--) {
+                if (log[i].action === 'start' || log[i].action === 'resume') return !!log[i].partial;
+                if (log[i].action === 'stop' || log[i].action === 'stop_partial') return false;
+            }
+            return false;
+        }
+
+        function showToast(msg, isErr = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `px-5 py-4 rounded-2xl shadow-xl font-bold text-base flex items-center gap-3 transform transition-all duration-300 translate-y-10 opacity-0 border max-w-sm w-full pointer-events-auto ${isErr ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-800 text-white border-slate-700'}`;
+            const icon = isErr
+                ? `<svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+                : `<svg class="w-6 h-6 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            toast.innerHTML = `${icon} <span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-10', 'opacity-0'), 10);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
+        }
+
+        // ============= ACȚIUNI OPERAȚIE =============
+        window.confirmFinal = function(operationId) {
+            const op = appState.operations.find(o => o.id === operationId);
+            if (!op) return;
+            if (!confirm(`Ești sigur că ai finalizat operația "${op.orderNumber}-${sanitizeId(op.template.id_op)}" (${op.template.locatie || '-'})?\n\nNu mai poate fi anulat.`)) return;
+            updateStatus(operationId, 'completed');
+        };
+
+        window.updateStatus = function(operationId, newStatus, partial) {
+            const op = appState.operations.find(o => o.id === operationId);
+            if (!op) return;
+            if (!operatorHasFunction(op)) {
+                showToast(`Nu ai funcția pentru locația "${op.template.locatie}".`, true);
                 return;
             }
-            if (['stop', 'finish'].includes(timerAction) && currentRole !== 'Admin') {
-                const existingOp = getTargetOp(projectId, originalIndex, opIndex, isExtra);
-                if (existingOp && existingOp.timerData && existingOp.timerData.user && existingOp.timerData.user !== currentUser) {
-                    showToast(`Pornită de ${existingOp.timerData.user}. Doar el/ea sau un Admin poate modifica!`, 'error');
+            if (newStatus === 'active') {
+                const activeBreak = getCurrentBreakPeriod();
+                if (activeBreak) {
+                    showToast(`Este pauză generală (${activeBreak.start}-${activeBreak.end}). Nu poți porni nimic acum.`, true);
+                    return;
+                }
+                const otherActive = appState.operations.find(o =>
+                    o.id !== operationId && o.status === 'active' && o.operator === appState.currentUser.nume
+                );
+                if (otherActive) {
+                    const otherSafeId = sanitizeId(otherActive.template.id_op);
+                    showToast(`Ai deja o operație în execuție: ${otherActive.orderNumber}-${otherSafeId} (${otherActive.template.locatie || '-'}). Oprește-o sau pune-o pe pauză înainte de a porni alta.`, true);
                     return;
                 }
             }
-            if (timerAction === 'start') {
-                const proiectPtr = allProiecte.find(p => p.id === projectId);
-                const piesaPtr = proiectPtr ? proiectPtr.piese[originalIndex] : null;
-                if (piesaPtr) {
-                    const targetOpPtr = getTargetOp(projectId, originalIndex, opIndex, isExtra);
-                    const blocker = findLowerUnfinishedOp(piesaPtr, targetOpPtr);
-                    if (blocker) {
-                        showToast(`Trebuie finalizată mai întâi OP${blocker.num} · ${blocker.label} pe această piesă!`, 'warning');
-                        return;
-                    }
+            appState.isLocallyInteracting = true;
+            const now = new Date().toISOString();
+            if (!op.timestamps) op.timestamps = { start: null, pauses: [], stop: null };
+            if (!op.timestamps.pauses) op.timestamps.pauses = [];
+            if (!op.processLog) op.processLog = [];
+
+            let actionName = '';
+            if (newStatus === 'active') {
+                actionName = op.timestamps.start ? 'resume' : 'start';
+                if (!op.timestamps.start) op.timestamps.start = now;
+                if (op.status === 'paused') op.timestamps.pauses.push({ type: 'end', time: now });
+                op.operator = appState.currentUser.nume;
+            } else if (newStatus === 'paused') {
+                actionName = 'pauza';
+                op.timestamps.pauses.push({ type: 'start', time: now });
+            } else if (newStatus === 'completed') {
+                actionName = 'stop';
+                op.timestamps.stop = now;
+            }
+            op.status = newStatus;
+
+            const logEntry = { action: actionName, time: now, user: appState.currentUser.nume };
+            if (actionName === 'stop') logEntry.duration = calculateElapsedTime(op);
+            if (partial && (actionName === 'start' || actionName === 'resume')) logEntry.partial = true;
+            op.processLog.push(logEntry);
+
+            renderList();
+
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOperation', opData: op }) })
+                .then(r => r.json())
+                .then(result => {
+                    setTimeout(() => { appState.isLocallyInteracting = false; }, 2000);
+                    if (!result.success) { showToast("Eroare salvare: " + result.error, true); fetchData(true); }
+                })
+                .catch(() => { appState.isLocallyInteracting = false; showToast("Eroare de comunicare.", true); });
+        };
+
+        window.startPartial = function(operationId) {
+            const op = appState.operations.find(o => o.id === operationId);
+            if (!op) return;
+            if (!operatorHasFunction(op)) { showToast(`Nu ai funcția pentru locația "${op.template.locatie}".`, true); return; }
+            const siblings = appState.operations.filter(o => o.orderNumber === op.orderNumber);
+            if (siblings.length > 0) {
+                const minSeq = Math.min(...siblings.map(s => extractOpSeq(s.template)));
+                const firstOpDone = siblings.filter(s => extractOpSeq(s.template) === minSeq).every(s => s.status === 'completed');
+                if (!firstOpDone) {
+                    showToast('Prima operație a comenzii (debitare) trebuie finalizată înainte de start parțial.', true);
+                    return;
                 }
-                const conflict = isUserCurrentlyWorking();
-                if (conflict) { showToast(`Ai deja o operațiune în curs: ${conflict}`, 'warning'); return; }
             }
-
-            const executeAction = async (locatieCod, locatieNume) => {
-                isUpdating = true;
-                let assignedOpNumber = null;
-                const proiect = allProiecte.find(p => p.id === projectId);
-                if (proiect) {
-                    const piesa = proiect.piese[originalIndex];
-                    if (piesa) {
-                        let targetOp = isExtra ? piesa.extraOps[opIndex] : piesa.ops[opIndex - 1];
-                        if (targetOp) {
-                            if (!targetOp.timerData) targetOp.timerData = { duration: 0, status: 'idle', sessions: [] };
-                            if (!targetOp.timerData.sessions) targetOp.timerData.sessions = [];
-                            const now = Date.now();
-                            if (timerAction === 'start') {
-                                targetOp.timerData.status = 'running';
-                                targetOp.timerData.startTime = now;
-                                if (!targetOp.timerData.firstStartTime) targetOp.timerData.firstStartTime = new Date(now).toISOString();
-                                targetOp.timerData.user = currentUser;
-                                targetOp.timerData.locatie = locatieCod || targetOp.timerData.locatie || null;
-                                targetOp.timerData.locatieNume = locatieNume || targetOp.timerData.locatieNume || null;
-                                if (!targetOp.timerData.opNumber) targetOp.timerData.opNumber = getNextOpNumber(piesa);
-                                assignedOpNumber = targetOp.timerData.opNumber;
-                                targetOp.timerData.sessions.push({ start: now, end: null, locatie: locatieCod || null });
-                            } else if (timerAction === 'stop') {
-                                targetOp.timerData.status = 'paused';
-                                if (targetOp.timerData.startTime) targetOp.timerData.duration = (targetOp.timerData.duration || 0) + Math.floor((now - targetOp.timerData.startTime) / 1000);
-                                targetOp.timerData.startTime = null; targetOp.timerData.user = currentUser;
-                            } else if (timerAction === 'finish') {
-                                if (targetOp.timerData.status === 'running' && targetOp.timerData.startTime) targetOp.timerData.duration = (targetOp.timerData.duration || 0) + Math.floor((now - targetOp.timerData.startTime) / 1000);
-                                targetOp.timerData.status = 'finished'; targetOp.timerData.startTime = null;
-                                targetOp.timerData.completedAt = new Date().toISOString(); targetOp.timerData.user = currentUser;
-                                if (!isExtra) targetOp.checked = true;
-                            }
-                            renderAll();
-                        }
-                    }
-                }
-
-                const actionName = isExtra ? 'updateExtraOperatieTimer' : 'updateOperatieTimer';
-                const payload = { action: actionName, projectId, cod_an, material, dimensiune, originalIndex, timerAction, user: currentUser, clientTime: Date.now() };
-                if (isExtra) payload.extraOpIndex = opIndex; else payload.opIndex = opIndex;
-                if (timerAction === 'start') { payload.locatie = locatieCod || null; payload.locatieNume = locatieNume || null; payload.opNumber = assignedOpNumber || null; }
-
-                try {
-                    const resp = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', body: JSON.stringify(payload) });
-                    const resJson = await resp.json();
-                    if (resJson && resJson.status === 'eroare') {
-                        showToast(resJson.mesaj || 'Eroare la salvare pe server!', 'error');
-                    }
-                } catch (e) { showToast('Eroare salvare pe server!', 'error'); }
-                finally { isUpdating = false; setTimeout(() => loadData(true), 500); }
-            };
-
-            if (timerAction === 'start') {
-                openLocationModal(opLabel || '', (cod, nume) => executeAction(cod, nume));
-                return;
-            }
-            if (timerAction === 'finish') {
-                openConfirmModal('Confirmare Finalizare', 'Ești sigur că ai finalizat această prelucrare? Timpul va fi înregistrat definitiv.', () => executeAction());
-                return;
-            }
-            executeAction();
+            if (!confirm('Operația anterioară din secvență nu e finalizată complet.\n\nPornești parțial, pe propria răspundere?')) return;
+            updateStatus(operationId, 'active', true);
         };
 
-        // ---------- EXTRA OP ADD ----------
-        const OPERATII_EXTRA_PREDEFINITE = [
-            'Filetare', 'Alezare', 'Rectificare', 'Zincare', 'Tratament Termic', 'Vopsire Lichidă',
-            'Vopsire Câmp Electrostatic', 'Sablare Fină', 'Sablare cu Alice', 'Ambalare', 'Montaj Subansamble',
-            'Control CTC', 'Măsurare 3D', 'Sudură Argon', 'Sudură Laser', 'Sudură MIG-MAG', 'Îndoire Abkant',
-            'Roluire', 'Debitare Laser', 'Debitare Plasmă', 'Debitare Oxigaz', 'Frezare CNC', 'Strunjire CNC',
-            'Zencuire', 'Șanfrenare', 'Tarodare', 'Marcare Laser', 'Lipire', 'Curățare Chimică', 'Polizare Manuală',
-            'Bavurare', 'Despicare'
-        ];
+        window.stopPartial = function(operationId) {
+            const op = appState.operations.find(o => o.id === operationId);
+            if (!op) return;
+            if (!operatorHasFunction(op)) { showToast(`Nu ai funcția pentru locația "${op.template.locatie}".`, true); return; }
+            if (!confirm('Închizi sesiunea parțială?\n\nTimpul lucrat se salvează, iar operația rămâne "de făcut".')) return;
+            appState.isLocallyInteracting = true;
+            const now = new Date().toISOString();
+            const duration = calculateElapsedTime(op);
+            if (!op.processLog) op.processLog = [];
+            op.processLog.push({ action: 'stop_partial', time: now, user: appState.currentUser.nume, duration, partial: true });
+            op.timestamps = { start: null, pauses: [], stop: null };
+            op.status = 'pending';
+            renderList();
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOperation', opData: op }) })
+                .then(r => r.json())
+                .then(result => {
+                    setTimeout(() => { appState.isLocallyInteracting = false; }, 2000);
+                    if (!result.success) { showToast("Eroare salvare: " + result.error, true); fetchData(true); }
+                    else showToast(`Sesiune parțială închisă (${duration} min).`);
+                })
+                .catch(() => { appState.isLocallyInteracting = false; showToast("Eroare de comunicare.", true); });
+        };
 
-        window.openAddExtraOp = function(projectId, cod_an, material, dimensiune, originalIndex) {
-            window.pendingExtraOpTarget = { projectId, cod_an, material, dimensiune, originalIndex };
-            const input = document.getElementById('extraOpInput');
-            input.value = '';
-            renderExtraOpList('');
-            updateExtraOpSaveLabel('');
-            const modal = document.getElementById('extraOpModal');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => input.focus(), 150);
+        window.deleteOperation = function(opId) {
+            if (appState.currentUser.rol !== 'Admin') return;
+            if (!confirm('Ștergi definitiv această operație?')) return;
+            appState.isLocallyInteracting = true;
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOperations', ids: [opId] }) })
+                .then(r => r.json())
+                .then(result => {
+                    setTimeout(() => { appState.isLocallyInteracting = false; }, 1000);
+                    if (result.success) {
+                        appState.operations = appState.operations.filter(o => o.id !== opId);
+                        renderList();
+                        showToast('Operație ștearsă.');
+                    } else showToast('Eroare la ștergere: ' + result.error, true);
+                })
+                .catch(() => { appState.isLocallyInteracting = false; showToast('Eroare de conexiune.', true); });
         };
-        function closeExtraOpModal() {
-            document.getElementById('extraOpModal').classList.add('opacity-0', 'pointer-events-none');
-        }
-        function updateExtraOpSaveLabel(text) {
-            const saveBtn = document.getElementById('btnExtraOpSave');
-            const label = document.getElementById('btnExtraOpSaveLabel');
-            if (text && text.trim()) {
-                label.textContent = text.trim();
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('opacity-40');
-            } else {
-                label.textContent = '...';
-                saveBtn.disabled = true;
-                saveBtn.classList.add('opacity-40');
+
+        // ============= MODAL LOCAȚIE =============
+        function populateLocationSelect(currentCode) {
+            const select = document.getElementById('newLocationInput');
+            select.innerHTML = '<option value="">-- Alege locația --</option>';
+            let found = false;
+
+            const isAdminUser = appState.currentUser.rol === 'Admin';
+            const myFunctii = (appState.currentUser.functii || '').split(',').map(f => f.trim().toLowerCase()).filter(Boolean);
+            const availableLocations = isAdminUser
+                ? WORK_LOCATIONS
+                : WORK_LOCATIONS.filter(loc => myFunctii.includes(loc.cod.toLowerCase()));
+
+            availableLocations.forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc.cod;
+                opt.textContent = `${loc.cod} — ${loc.nume}`;
+                if (loc.cod === currentCode) { opt.selected = true; found = true; }
+                select.appendChild(opt);
+            });
+            if (currentCode && !found) {
+                const opt = document.createElement('option');
+                opt.value = currentCode;
+                opt.textContent = `${currentCode} (locația curentă)`;
+                opt.selected = true;
+                select.appendChild(opt);
+            }
+            if (availableLocations.length === 0 && !isAdminUser) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Nu ai nicio funcție/locație asociată contului tău';
+                opt.disabled = true;
+                select.insertBefore(opt, select.firstChild);
             }
         }
-        function renderExtraOpList(filterTerm) {
-            const listEl = document.getElementById('extraOpList');
-            const term = normalizeStr(filterTerm);
-            const items = OPERATII_EXTRA_PREDEFINITE.filter(o => !term || normalizeStr(o).includes(term));
-            let html = items.map(o => `
-                <button onclick="selectExtraOpText('${o.replace(/'/g, "\\'")}')" class="w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 tap-scale text-sm font-bold text-slate-700">${o}</button>
-            `).join('');
-            if (filterTerm && filterTerm.trim() && !items.some(o => normalizeStr(o) === normalizeStr(filterTerm))) {
-                html = `<button onclick="selectExtraOpText('${filterTerm.trim().replace(/'/g, "\\'")}')" class="w-full text-left px-4 py-3.5 rounded-xl border-2 border-dashed border-abus-blue bg-blue-50 tap-scale text-sm font-black text-abus-blue">+ Adaugă „${filterTerm.trim()}" ca operație nouă</button>` + html;
-            }
-            listEl.innerHTML = html || '<div class="text-center py-8 text-slate-400 font-bold text-sm">Nicio operație găsită.</div>';
-        }
-        window.selectExtraOpText = function(text) {
-            document.getElementById('extraOpInput').value = text;
-            updateExtraOpSaveLabel(text);
+
+        window.onLocationSelectChange = function() {
+            const select = document.getElementById('newLocationInput');
+            const match = WORK_LOCATIONS.find(loc => loc.cod === select.value);
+            if (match) document.getElementById('newDescInput').value = match.nume;
         };
-        document.getElementById('extraOpInput').addEventListener('input', (e) => {
-            renderExtraOpList(e.target.value);
-            updateExtraOpSaveLabel(e.target.value);
-        });
-        document.getElementById('btnExtraOpCancel').addEventListener('click', closeExtraOpModal);
-        document.getElementById('btnExtraOpSave').addEventListener('click', async () => {
-            const text = document.getElementById('extraOpInput').value.trim();
-            if (!text) { showToast('Alege sau scrie o denumire pentru operație.', 'warning'); return; }
-            const t = window.pendingExtraOpTarget;
-            if (!t) return;
-            closeExtraOpModal();
+
+        window.openLocationModal = function(opId) {
+            const op = appState.operations.find(o => o.id === opId);
+            if (!op) return;
+            if (!operatorHasFunction(op)) { showToast(`Nu ai funcția pentru locația "${op.template.locatie}", nu poți edita.`, true); return; }
+            appState.locationEditOpId = opId;
+            populateLocationSelect(op.template.locatie || '');
+            document.getElementById('newDescInput').value = op.template.descriere_locatie || '';
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); }, 10);
+        };
+
+        window.closeLocationModal = function() {
+            const modal = document.getElementById('locationModal');
+            const content = document.getElementById('locModalContent');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        };
+
+        window.openPasswordModal = function() {
+            document.getElementById('oldPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            const modal = document.getElementById('passwordModal');
+            const content = document.getElementById('pwdModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); }, 10);
+        };
+
+        window.closePasswordModal = function() {
+            const modal = document.getElementById('passwordModal');
+            const content = document.getElementById('pwdModalContent');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        };
+
+        window.savePassword = function() {
+            const oldPass = document.getElementById('oldPasswordInput').value;
+            const newPass = document.getElementById('newPasswordInput').value;
+            const confirmPass = document.getElementById('confirmPasswordInput').value;
+
+            if (!oldPass || !newPass || !confirmPass) { showToast('Completează toate câmpurile.', true); return; }
+            if (newPass !== confirmPass) { showToast('Parola nouă și confirmarea nu coincid.', true); return; }
+            if (newPass.length < 4) { showToast('Parola nouă trebuie să aibă minim 4 caractere.', true); return; }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Se salvează...';
+            btn.disabled = true;
+
+            fetch(AUTH_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'changePassword', username: appState.currentUser.nume, oldPassword: oldPass, newPassword: newPass })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) { showToast('Parola a fost schimbată cu succes!'); closePasswordModal(); }
+                else showToast(result.error || 'Eroare la schimbarea parolei.', true);
+            })
+            .catch(() => showToast('Eroare de conexiune.', true))
+            .finally(() => { btn.textContent = originalText; btn.disabled = false; });
+        };
+
+        window.openDrawing = async function(query) {
+            if (!query) { showToast('Nu există un cod (AN) pentru care să caut desenul.', true); return; }
+
+            const modal = document.getElementById('drawingModal');
+            const body = document.getElementById('drawingModalBody');
+            const title = document.getElementById('drawingModalTitle');
+
+            title.textContent = `Caut „${query}"...`;
+            body.innerHTML = `<span class="text-slate-400 font-medium">Se caută desenul...</span>`;
+            document.getElementById('drawingModalActions').classList.add('hidden');
+            document.getElementById('drawingModalActions').innerHTML = '';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex', 'flex-col');
+
             try {
-                const resp = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow',
-                    body: JSON.stringify({ action: 'addCustomOpPiesa', projectId: t.projectId, cod_an: t.cod_an, material: t.material, originalIndex: t.originalIndex, text, user: currentUser })
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', body: JSON.stringify({ action: 'findDrawing', query })
                 });
-                const resJson = await resp.json();
-                if (resJson && resJson.status === 'eroare') { showToast(resJson.mesaj || 'Eroare la adăugare!', 'error'); }
-                else { showToast('Operație adăugată.', 'success'); }
-            } catch (e) { showToast('Eroare la adăugare!', 'error'); }
-            finally { setTimeout(() => loadData(true), 400); }
-        });
+                const result = await response.json();
+
+                if (!result.success) {
+                    body.innerHTML = `<span class="text-red-400 font-medium px-6 text-center">${result.error || 'Eroare la căutare.'}</span>`;
+                    return;
+                }
+                if (result.matches.length === 0) {
+                    title.textContent = 'Desen tehnic';
+                    body.innerHTML = `<span class="text-slate-400 font-medium px-6 text-center">Niciun desen găsit pentru „${query}".</span>`;
+                    return;
+                }
+                if (result.matches.length === 1) {
+                    showDrawingFile(result.matches[0]);
+                } else {
+                    title.textContent = `${result.matches.length} desene - alege versiunea`;
+                    body.innerHTML = `
+                        <div class="w-full h-full overflow-y-auto p-4 space-y-2 bg-white">
+                            ${result.matches.map((m, idx) => `
+                                <button onclick='showDrawingFile(${JSON.stringify(m)})' class="btn-tap w-full text-left px-4 py-4 bg-slate-50 border-2 ${idx === 0 ? 'border-abus-blue' : 'border-slate-200'} rounded-xl active:border-abus-blue flex items-center gap-3">
+                                    <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-base font-bold text-slate-700 truncate">${m.name}</div>
+                                        <div class="text-[11px] font-semibold text-slate-400">Modificat: ${m.modifiedLabel || '-'} ${idx === 0 ? '<span class="text-abus-blue font-black">· cel mai recent</span>' : ''}</div>
+                                    </div>
+                                </button>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                body.innerHTML = `<span class="text-red-400 font-medium px-6 text-center">Eroare de conexiune la căutarea desenului.</span>`;
+            }
+        };
+
+        window.showDrawingFile = function(file) {
+            const modal = document.getElementById('drawingModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex', 'flex-col');
+            }
+            document.getElementById('drawingModalTitle').textContent = `📄 ${file.name}${file.modifiedLabel ? ' · ' + file.modifiedLabel : ''}`;
+            document.getElementById('drawingModalBody').innerHTML = `<iframe src="${file.url}" class="w-full h-full border-0" allow="autoplay"></iframe>`;
+            const actions = document.getElementById('drawingModalActions');
+            actions.classList.remove('hidden');
+            actions.innerHTML = `
+                <a href="https://drive.google.com/file/d/${file.id}/view" target="_blank" rel="noopener" class="btn-tap flex-1 text-center text-sm font-bold text-white bg-abus-blue px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    Deschide complet
+                </a>
+                <a href="https://drive.google.com/uc?export=download&id=${file.id}" target="_blank" rel="noopener" class="btn-tap flex-1 text-center text-sm font-bold text-white bg-white/10 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Descarcă
+                </a>
+            `;
+        };
+
+        window.closeDrawingModal = function() {
+            const modal = document.getElementById('drawingModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex', 'flex-col');
+            document.getElementById('drawingModalBody').innerHTML = '';
+        };
+
+        window.saveLocation = function() {
+            const newLoc = document.getElementById('newLocationInput').value.trim();
+            const newDesc = document.getElementById('newDescInput').value.trim();
+            const op = appState.operations.find(o => o.id === appState.locationEditOpId);
+            op.template.locatie = newLoc;
+            op.template.descriere_locatie = newDesc;
+            closeLocationModal();
+            renderList();
+            appState.isLocallyInteracting = true;
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOperation', opData: op }) })
+                .then(r => r.json())
+                .then(res => {
+                    setTimeout(() => { appState.isLocallyInteracting = false; }, 2000);
+                    if (!res.success) showToast("Eroare salvare: " + res.error, true);
+                    else showToast("Detalii actualizate.");
+                })
+                .catch(() => { appState.isLocallyInteracting = false; showToast("Eroare comunicare.", true); });
+        };
+
+        window.toggleGroup = function(key) {
+            appState.expandedGroups[key] = !appState.expandedGroups[key];
+            renderList();
+        };
+
+        window.goToGroup = function(key) {
+            appState.expandedGroups[key] = true;
+            renderList();
+            setTimeout(() => {
+                const el = document.querySelector(`[data-group-key="${CSS.escape(key)}"]`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    el.classList.add('ring-4', 'ring-abus-orange');
+                    setTimeout(() => el.classList.remove('ring-4', 'ring-abus-orange'), 1500);
+                }
+            }, 60);
+        };
+
+        window.filterList = function() {
+            renderList();
+        };
+
+        // ============= RANDARE LISTĂ (carduri, mobil) =============
+        function renderList() {
+            const isAdmin = appState.currentUser.rol === 'Admin';
+            const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+            const opsByOrder = {};
+            appState.operations.forEach(op => {
+                if (!opsByOrder[op.orderNumber]) opsByOrder[op.orderNumber] = [];
+                opsByOrder[op.orderNumber].push(op);
+            });
+
+            let filteredOps = appState.operations;
+            if (q) {
+                filteredOps = filteredOps.filter(op =>
+                    String(op.orderNumber||'').toLowerCase().includes(q) ||
+                    String(op.abusType||'').toLowerCase().includes(q) ||
+                    String(op.template.locatie||'').toLowerCase().includes(q) ||
+                    String(op.template.descriere_op||'').toLowerCase().includes(q)
+                );
+            }
+
+            const opsByDelivery = {};
+            const deliveryKeys = [];
+            filteredOps.forEach(op => {
+                const key = (op.dataLivrare || '').trim() || '';
+                if (!opsByDelivery[key]) { opsByDelivery[key] = []; deliveryKeys.push(key); }
+                opsByDelivery[key].push(op);
+            });
+            deliveryKeys.sort((a, b) => {
+                if (a === '') return 1;
+                if (b === '') return -1;
+                return (parseDataLivrare(a) || 0) - (parseDataLivrare(b) || 0);
+            });
+
+            groupsContainer.innerHTML = '';
+
+            const anyExpanded = deliveryKeys.some(k => !!appState.expandedGroups[k]) || !!q;
+            let renderedGroupsCount = 0;
+
+            deliveryKeys.forEach(key => {
+                const opsInGroup = opsByDelivery[key];
+                const isExpanded = !!appState.expandedGroups[key] || !!q;
+                const isDimmed = anyExpanded && !isExpanded;
+                const pendingCount = opsInGroup.filter(o => o.status === 'pending').length;
+                const activeCount = opsInGroup.filter(o => o.status === 'active' || o.status === 'paused').length;
+                const completedCount = opsInGroup.filter(o => o.status === 'completed').length;
+                const isFinalized = opsInGroup.length > 0 && completedCount === opsInGroup.length;
+
+                // Pe mobil nu mai arătăm deloc grupurile complet finalizate
+                if (isFinalized) return;
+                renderedGroupsCount++;
+
+                const orderCount = new Set(opsInGroup.map(o => o.orderNumber)).size;
+                const groupProgress = opsInGroup.length > 0 ? Math.round((completedCount / opsInGroup.length) * 100) : 0;
+
+                const groupDiv = document.createElement('div');
+                groupDiv.dataset.groupKey = key;
+                groupDiv.className = `rounded-2xl overflow-hidden shadow-sm transition-all duration-300 ${isDimmed ? 'opacity-40' : ''}`;
+
+                const headerBg = isFinalized ? 'bg-emerald-600' : 'bg-abus-blue';
+                groupDiv.innerHTML = `
+                    <button onclick="toggleGroup('${key}')" class="btn-tap w-full ${headerBg} text-white px-4 py-4 flex items-center justify-between text-left">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-lg font-black ${isFinalized ? '' : getDeliveryTextClass(key)}">📅 ${formatDataLivrare(key)}</span>
+                                ${isFinalized ? '<span class="bg-white/20 text-[11px] font-black px-2 py-0.5 rounded-full">FINALIZAT</span>' : ''}
+                            </div>
+                            <div class="text-[13px] font-semibold text-white/80">${orderCount} ${orderCount === 1 ? 'comandă' : 'comenzi'} · ${opsInGroup.length} operații · ${groupProgress}%</div>
+                        </div>
+                        <svg class="w-6 h-6 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="w-full h-1.5 bg-white/20">
+                        <div class="h-full ${isFinalized ? 'bg-white' : 'bg-abus-orange'}" style="width:${groupProgress}%"></div>
+                    </div>
+                `;
+
+                if (isExpanded) {
+                    const cardsWrap = document.createElement('div');
+                    cardsWrap.className = 'bg-slate-100 p-3 space-y-2.5';
+
+                    // Grupare pe comandă, în interiorul acestei date de livrare
+                    const opsByOrderInGroup = {};
+                    const orderKeysInGroup = [];
+                    opsInGroup.forEach(op => {
+                        const ok = op.orderNumber || '-';
+                        if (!opsByOrderInGroup[ok]) { opsByOrderInGroup[ok] = []; orderKeysInGroup.push(ok); }
+                        opsByOrderInGroup[ok].push(op);
+                    });
+
+                    const anyOrderExpandedInGroup = orderKeysInGroup.some(o => !!appState.expandedGroups[`${key}__o__${o}`]) || !!q;
+
+                    orderKeysInGroup.forEach(orderNum => {
+                        const opsInOrder = opsByOrderInGroup[orderNum];
+                        const orderKey = `${key}__o__${orderNum}`;
+                        const orderIsExpanded = !!appState.expandedGroups[orderKey] || !!q;
+                        const orderCompleted = opsInOrder.filter(o => o.status === 'completed').length;
+                        const orderActive = opsInOrder.filter(o => o.status === 'active' || o.status === 'paused').length;
+                        const orderIsFinalized = opsInOrder.length > 0 && orderCompleted === opsInOrder.length;
+                        const ansInOrder = [...new Set(opsInOrder.map(o => o.abusType).filter(Boolean))];
+
+                        // Efect de focus: dacă o altă comandă din aceeași dată e deschisă, aceasta se estompează
+                        const orderIsDimmed = anyOrderExpandedInGroup && !orderIsExpanded;
+
+                        const orderWrap = document.createElement('div');
+                        orderWrap.className = `rounded-xl overflow-hidden shadow-sm transition-all duration-300 ${orderIsDimmed ? 'opacity-40 blur-[1px] grayscale-[30%] pointer-events-none' : ''}`;
+                        const orderHeaderBg = orderIsFinalized ? 'bg-emerald-500' : 'bg-slate-700';
+
+                        orderWrap.innerHTML = `
+                            <div onclick="toggleGroup('${orderKey}')" class="btn-tap w-full ${orderHeaderBg} text-white px-3.5 py-3 flex items-center justify-between text-left gap-2 cursor-pointer">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-sm font-black">📦 Comandă ${orderNum}</span>
+                                        ${orderIsFinalized ? '<span class="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded-full">GATA</span>' : ''}
+                                    </div>
+                                    <div class="text-[11px] font-semibold text-white/70 mt-0.5">${opsInOrder.length} piese${orderActive > 0 ? ' · ' + orderActive + ' în lucru' : ''}</div>
+                                </div>
+                                ${ansInOrder.length > 0 ? `<span class="text-lg font-black text-white bg-white/25 px-3 py-1.5 rounded-lg flex-shrink-0 whitespace-nowrap">AN ${ansInOrder.join(', ')}</span>` : ''}
+                                ${ansInOrder.length > 0 ? `<button onclick="event.stopPropagation(); openDrawing('${ansInOrder[0]}')" class="btn-tap text-white bg-white/15 p-2 rounded-lg flex-shrink-0" title="Deschide desenul (PDF)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </button>` : ''}
+                                <svg class="w-5 h-5 flex-shrink-0 transition-transform duration-200 ${orderIsExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        `;
+
+                        if (orderIsExpanded) {
+                            const piecesWrap = document.createElement('div');
+                            piecesWrap.className = 'p-2.5 space-y-2.5 bg-slate-50';
+                            opsInOrder.forEach(op => {
+                                piecesWrap.appendChild(buildOpCard(op, opsByOrder, isAdmin));
+                            });
+                            orderWrap.appendChild(piecesWrap);
+                        }
+
+                        cardsWrap.appendChild(orderWrap);
+                    });
+
+                    groupDiv.appendChild(cardsWrap);
+                }
+
+                groupsContainer.appendChild(groupDiv);
+            });
+
+            document.getElementById('emptyState').classList.toggle('hidden', renderedGroupsCount > 0);
+
+            renderWorkBanner();
+        }
+
+        function buildStatusLabel(status) {
+            if (status === 'active') return `<div class="text-sm font-black text-abus-blue mb-1 flex items-center gap-1.5"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-abus-blue opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-abus-blue"></span></span>🔧 În curs de execuție</div>`;
+            if (status === 'paused') return `<div class="text-sm font-black text-abus-orange mb-1">⏸ În pauză</div>`;
+            if (status === 'completed') return `<div class="text-sm font-black text-emerald-600 mb-1">✅ Finalizat</div>`;
+            return '';
+        }
+
+        function buildOpCard(op, opsByOrder, isAdmin) {
+            let isLocked = false;
+            const safeOpId = sanitizeId(op.template.id_op);
+            const currentSeq = extractOpSeq(op.template);
+            const siblings = opsByOrder[op.orderNumber] || [];
+            for (let sib of siblings) {
+                const sibSeq = extractOpSeq(sib.template);
+                if (sibSeq < currentSeq && sib.status !== 'completed') { isLocked = true; break; }
+            }
+            const hasFunction = operatorHasFunction(op);
+
+            // Start parțial are sens doar după ce prima operație (de regulă debitare/OP10) a produs deja piese
+            let firstOpDone = false;
+            if (siblings.length > 0) {
+                const minSeq = Math.min(...siblings.map(s => extractOpSeq(s.template)));
+                firstOpDone = siblings.filter(s => extractOpSeq(s.template) === minSeq).every(s => s.status === 'completed');
+            }
+
+            let accent = 'border-slate-300';
+            let cardBg = 'bg-white';
+            if (op.status === 'completed') { accent = 'border-emerald-400'; cardBg = 'bg-white opacity-80'; }
+            else if (op.status === 'active') { accent = 'border-abus-blue'; cardBg = 'bg-abus-blue/5'; }
+            else if (op.status === 'paused') { accent = 'border-abus-orange'; cardBg = 'bg-abus-orange/5'; }
+            else if (isLocked) { accent = 'border-slate-300'; }
+            else if (hasFunction) { accent = 'border-green-400'; cardBg = 'bg-green-50/70'; }
+
+            const card = document.createElement('div');
+            card.className = `rounded-2xl border-l-[6px] ${accent} ${cardBg} shadow-sm p-4`;
+
+            let actionHtml = '';
+            if (isLocked && op.status === 'pending') {
+                actionHtml = `
+                    <div class="flex flex-col gap-2 mt-3">
+                        <span class="w-full text-center py-3 rounded-xl bg-slate-200 text-slate-500 font-black text-base">🔒 BLOCAT</span>
+                        ${(hasFunction && firstOpDone) ? `<button onclick="startPartial('${op.id}')" class="btn-tap w-full py-3 rounded-xl bg-amber-100 text-amber-800 border-2 border-amber-300 font-black text-base">⚡ START PARȚIAL</button>` : ''}
+                    </div>`;
+            } else if (op.status !== 'completed' && !hasFunction) {
+                actionHtml = `<span class="block w-full text-center py-3.5 rounded-xl bg-orange-50 text-orange-500 border-2 border-orange-200 font-black text-base mt-3">🔒 Necesită: ${op.template.locatie || 'N/A'}</span>`;
+            } else if (op.status === 'pending') {
+                actionHtml = `<button onclick="updateStatus('${op.id}', 'active')" class="btn-tap w-full py-4 rounded-xl bg-green-500 text-white font-black text-xl shadow-md mt-3">START</button>`;
+            } else if (op.status === 'active') {
+                const isPartial = isCurrentSessionPartial(op);
+                actionHtml = `
+                    <div class="mt-3 space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="updateStatus('${op.id}', 'paused')" class="btn-tap py-4 rounded-xl bg-amber-400 text-amber-900 font-black text-lg">PAUZĂ</button>
+                            <button onclick="confirmFinal('${op.id}')" class="btn-tap py-4 rounded-xl bg-abus-orange text-white font-black text-lg">FINAL</button>
+                        </div>
+                        ${isPartial ? `<button onclick="stopPartial('${op.id}')" class="btn-tap w-full py-2.5 rounded-xl bg-white text-amber-700 border-2 border-amber-300 font-bold text-sm">⚡ STOP PARȚIAL</button>` : ''}
+                    </div>`;
+            } else if (op.status === 'paused') {
+                const isPartial = isCurrentSessionPartial(op);
+                actionHtml = `
+                    <div class="mt-3 space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="updateStatus('${op.id}', 'active')" class="btn-tap py-4 rounded-xl bg-green-500 text-white font-black text-lg">REIA</button>
+                            <button onclick="confirmFinal('${op.id}')" class="btn-tap py-4 rounded-xl bg-abus-orange text-white font-black text-lg">FINAL</button>
+                        </div>
+                        ${isPartial ? `<button onclick="stopPartial('${op.id}')" class="btn-tap w-full py-2.5 rounded-xl bg-white text-amber-700 border-2 border-amber-300 font-bold text-sm">⚡ STOP PARȚIAL</button>` : ''}
+                    </div>`;
+            } else if (op.status === 'completed') {
+                actionHtml = `<span class="block w-full text-center py-3.5 rounded-xl bg-emerald-50 text-emerald-600 border-2 border-emerald-200 font-black text-lg mt-3">✅ GATA</span>`;
+            }
+
+            const isPartialAny = (op.processLog || []).some(e => e.partial);
+
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-2 mb-2">
+                    <div class="min-w-0">
+                        <div class="text-2xl font-black text-abus-blue leading-tight">AN ${op.abusType || '-'}</div>
+                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                            <span class="text-[11px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Comandă ${op.orderNumber}</span>
+                            <span class="text-[11px] font-bold text-slate-400">${op.orderNumber}-${safeOpId}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        ${isAdmin ? `<button onclick="deleteOperation('${op.id}')" class="btn-tap text-red-400 bg-red-50 p-2 rounded-xl" title="Șterge">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>` : ''}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="text-2xl font-black ${hasFunction && appState.currentUser.rol === 'Operator' ? 'text-abus-blue' : 'text-slate-800'} leading-tight">📍 ${op.template.descriere_locatie || op.template.locatie || 'Nespecificat'}</span>
+                    ${hasFunction ? `<button onclick="openLocationModal('${op.id}')" class="text-slate-400 bg-slate-100 p-1.5 rounded-lg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>` : ''}
+                </div>
+                ${(op.template.locatie && op.template.descriere_locatie) ? `<div class="text-[11px] font-bold text-slate-400 bg-slate-100 inline-block px-2 py-0.5 rounded mb-2">Cod: ${op.template.locatie}</div>` : ''}
+                <div class="text-base text-slate-600 font-medium mb-1">${op.template.descriere_op || '-'}</div>
+                ${buildStatusLabel(op.status)}
+                ${op.operator ? `<div class="text-sm text-blue-600 font-bold mt-1">👤 ${op.operator}</div>` : ''}
+                ${isPartialAny ? `<div class="text-sm text-amber-700 font-black mt-1">⚡ PARȚIAL</div>` : ''}
+                ${actionHtml}
+            `;
+            return card;
+        }
+
+        function updateLiveTimers() {
+            document.querySelectorAll('.live-timer').forEach(el => {
+                const op = appState.operations.find(o => o.id === el.dataset.opId);
+                if (op) el.innerText = `⏱ ${calculateElapsedTime(op)} m`;
+            });
+        }
+
+        function renderWorkBanner() {
+            const banner = document.getElementById('workBanner');
+            if (appState.currentUser.rol !== 'Operator') { banner.classList.add('hidden'); return; }
+            const myName = appState.currentUser.nume;
+            const myActiveNow = appState.operations.filter(op => (op.status === 'active' || op.status === 'paused') && op.operator === myName);
+            const available = appState.operations.filter(op => op.status === 'pending' && operatorHasFunction(op));
+            banner.classList.remove('hidden');
+
+            if (myActiveNow.length > 0) {
+                const op = myActiveNow[0];
+                banner.className = 'mx-4 mt-4 px-4 py-3.5 rounded-2xl text-base font-bold flex items-center gap-2 flex-wrap bg-abus-blue/10 text-abus-blue border-2 border-abus-blue/20';
+                banner.innerHTML = `⏱️ Lucrezi la <strong>AN ${op.abusType||'-'}</strong> · ${op.template.locatie||'-'} <button onclick="goToGroup('${op.dataLivrare||''}')" class="btn-tap bg-abus-blue text-white px-3 py-1.5 rounded-lg font-black text-sm ml-auto">Vezi →</button>`;
+            } else if (available.length > 0) {
+                const groups = {}; const order = [];
+                available.forEach(op => {
+                    const key = op.dataLivrare || '';
+                    if (!groups[key]) { groups[key] = new Set(); order.push(key); }
+                    groups[key].add(op.abusType || '-');
+                });
+                const parts = order.slice(0, 3).map(k => `<button onclick="goToGroup('${k}')" class="btn-tap bg-white px-2.5 py-1 rounded-lg border-2 border-green-300 font-black text-sm">📅 ${formatDataLivrare(k)}</button>`);
+                banner.className = 'mx-4 mt-4 px-4 py-3.5 rounded-2xl text-base font-bold flex items-center gap-2 flex-wrap bg-green-50 text-green-700 border-2 border-green-200';
+                banner.innerHTML = `✅ Ai de lucru: ${parts.join(' ')}`;
+            } else {
+                banner.className = 'mx-4 mt-4 px-4 py-3.5 rounded-2xl text-base font-semibold flex items-center gap-2 bg-slate-100 text-slate-400 italic';
+                banner.innerHTML = `Nu ai operații disponibile în acest moment.`;
+            }
+        }
+
     </script>
 </body>
 </html>
